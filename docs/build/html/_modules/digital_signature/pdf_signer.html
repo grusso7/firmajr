@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>digital_signature.pdf_signer &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="Indice" href="../../genindex.html" />
+    <link rel="search" title="Cerca" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Codice sorgente per digital_signature.pdf_signer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># *-* coding: utf-8 *-*</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">from</span> <span class="nn">asn1crypto</span> <span class="kn">import</span> <span class="n">cms</span><span class="p">,</span> <span class="n">algos</span><span class="p">,</span> <span class="n">tsp</span>
+
+<span class="kn">from</span> <span class="nn">signature_util</span> <span class="kn">import</span> <span class="n">SignatureUtils</span>
+<span class="kn">from</span> <span class="nn">asn1crypto.x509</span> <span class="kn">import</span> <span class="n">Certificate</span>
+<span class="kn">from</span> <span class="nn">PyKCS11</span> <span class="kn">import</span> <span class="n">Mechanism</span><span class="p">,</span> <span class="n">LowLevel</span>
+<span class="kn">from</span> <span class="nn">my_logger</span> <span class="kn">import</span> <span class="n">MyLogger</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">MyLogger</span><span class="p">()</span><span class="o">.</span><span class="n">my_logger</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="sign"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.pdf_signer.sign">[documenti]</a><span class="k">def</span> <span class="nf">sign</span><span class="p">(</span><span class="n">datau</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">cert</span><span class="p">,</span> <span class="n">cert_value</span><span class="p">,</span> <span class="n">hashalgo</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">signed_value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">signed_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">signed_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">hashlib</span><span class="p">,</span> <span class="n">hashalgo</span><span class="p">)(</span><span class="n">datau</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="c1"># signed_time = datetime.now() # not needed in signed attributes anymore</span>
+
+    <span class="n">x509</span> <span class="o">=</span> <span class="n">Certificate</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cert_value</span><span class="p">)</span>
+    <span class="n">certificates</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">certificates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x509</span><span class="p">)</span>
+
+    <span class="n">cert_value_digest</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span><span class="n">cert_value</span><span class="p">,</span> <span class="n">Mechanism</span><span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKM_SHA256</span><span class="p">)))</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;building signed attributes...&#39;</span><span class="p">)</span>
+    <span class="n">signer</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;v1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sid&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">SignerIdentifier</span><span class="p">({</span>
+            <span class="s1">&#39;issuer_and_serial_number&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">IssuerAndSerialNumber</span><span class="p">({</span>
+                <span class="s1">&#39;issuer&#39;</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">issuer</span><span class="p">,</span>
+                <span class="s1">&#39;serial_number&#39;</span><span class="p">:</span> <span class="n">x509</span><span class="o">.</span><span class="n">serial_number</span><span class="p">,</span>
+            <span class="p">}),</span>
+        <span class="p">}),</span>
+        <span class="s1">&#39;digest_algorithm&#39;</span><span class="p">:</span> <span class="n">algos</span><span class="o">.</span><span class="n">DigestAlgorithm</span><span class="p">({</span><span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="n">hashalgo</span><span class="p">}),</span>
+        <span class="s1">&#39;signature_algorithm&#39;</span><span class="p">:</span> <span class="n">algos</span><span class="o">.</span><span class="n">SignedDigestAlgorithm</span><span class="p">({</span><span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;rsassa_pkcs1v15&#39;</span><span class="p">}),</span>
+        <span class="s1">&#39;signature&#39;</span><span class="p">:</span> <span class="n">signed_value</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="n">signer</span><span class="p">[</span><span class="s1">&#39;signed_attrs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">cms</span><span class="o">.</span><span class="n">CMSAttribute</span><span class="p">({</span>
+                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">CMSAttributeType</span><span class="p">(</span><span class="s1">&#39;content_type&#39;</span><span class="p">),</span>
+                <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,),</span>
+            <span class="p">}),</span>
+            <span class="n">cms</span><span class="o">.</span><span class="n">CMSAttribute</span><span class="p">({</span>
+                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">CMSAttributeType</span><span class="p">(</span><span class="s1">&#39;message_digest&#39;</span><span class="p">),</span>
+                <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">signed_value</span><span class="p">,),</span>
+            <span class="p">}),</span>
+            <span class="c1"># cms.CMSAttribute({</span>
+            <span class="c1">#     &#39;type&#39;: cms.CMSAttributeType(&#39;signing_time&#39;),</span>
+            <span class="c1">#     &#39;values&#39;: (cms.Time({&#39;utc_time&#39;: core.UTCTime(signed_time)}),)</span>
+            <span class="c1"># }),</span>
+            <span class="n">cms</span><span class="o">.</span><span class="n">CMSAttribute</span><span class="p">({</span>
+                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">CMSAttributeType</span><span class="p">(</span><span class="s1">&#39;1.2.840.113549.1.9.16.2.47&#39;</span><span class="p">),</span>
+                <span class="s1">&#39;values&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">tsp</span><span class="o">.</span><span class="n">SigningCertificateV2</span><span class="p">({</span>
+                    <span class="s1">&#39;certs&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">tsp</span><span class="o">.</span><span class="n">ESSCertIDv2</span><span class="p">({</span>
+                        <span class="s1">&#39;hash_algorithm&#39;</span><span class="p">:</span> <span class="n">algos</span><span class="o">.</span><span class="n">DigestAlgorithm</span><span class="p">({</span><span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="n">hashalgo</span><span class="p">,</span> <span class="s1">&#39;parameters&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}),</span>
+                        <span class="s1">&#39;cert_hash&#39;</span><span class="p">:</span> <span class="n">cert_value_digest</span><span class="p">,</span>
+                    <span class="p">}),),</span>
+                <span class="p">}),)</span>
+            <span class="p">}),</span>
+        <span class="p">]</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;v1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;digest_algorithms&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">DigestAlgorithms</span><span class="p">((</span>
+            <span class="n">algos</span><span class="o">.</span><span class="n">DigestAlgorithm</span><span class="p">({</span><span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="n">hashalgo</span><span class="p">}),</span>
+        <span class="p">)),</span>
+        <span class="s1">&#39;encap_content_info&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;content_type&#39;</span><span class="p">:</span> <span class="s1">&#39;data&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;certificates&#39;</span><span class="p">:</span> <span class="n">certificates</span><span class="p">,</span>
+        <span class="c1"># &#39;crls&#39;: [],</span>
+        <span class="s1">&#39;signer_infos&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">signer</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+    <span class="n">datas</span> <span class="o">=</span> <span class="n">cms</span><span class="o">.</span><span class="n">ContentInfo</span><span class="p">({</span>
+        <span class="s1">&#39;content_type&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">ContentType</span><span class="p">(</span><span class="s1">&#39;signed_data&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="n">cms</span><span class="o">.</span><span class="n">SignedData</span><span class="p">(</span><span class="n">config</span><span class="p">),</span>
+    <span class="p">})</span>
+    <span class="k">if</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="n">tosign</span> <span class="o">=</span> <span class="n">datas</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">][</span><span class="s1">&#39;signer_infos&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;signed_attrs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dump</span><span class="p">()</span>
+        <span class="n">tosign</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x31</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">tosign</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tosign</span> <span class="o">=</span> <span class="n">datau</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;signed attributes ready&#39;</span><span class="p">)</span>
+    <span class="c1"># fetching private key from smart card</span>
+    <span class="n">priv_key</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="o">.</span><span class="n">fetch_private_key</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
+    <span class="n">mechanism</span> <span class="o">=</span> <span class="n">Mechanism</span><span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKM_SHA256_RSA_PKCS</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;signing...&#39;</span><span class="p">)</span>
+    <span class="c1"># signing bytes to be signed</span>
+    <span class="n">signature</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">priv_key</span><span class="p">,</span> <span class="n">tosign</span><span class="p">,</span> <span class="n">mechanism</span><span class="p">)</span>
+
+    <span class="n">datas</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">][</span><span class="s1">&#39;signer_infos&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;signature&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">datas</span><span class="o">.</span><span class="n">dump</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Codice del modulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

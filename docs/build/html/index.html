@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>Documentazione di FirmaJR! &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="Indice" href="genindex.html" />
+    <link rel="search" title="Cerca" href="search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="modules.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="documentazione-di-firmajr">
+<h1>Documentazione di FirmaJR!<a class="headerlink" href="#documentazione-di-firmajr" title="Link a questa intestazione">¶</a></h1>
+<p>FirmaJR è un’applicazione che permette di firmare digitalmente documenti.</p>
+<p>Il software è scritto in Python 3 con lo scopo di sostituire il precedente scritto in Java. JR sta per Java Removed.
+La scelta di svilupparla in python è dovuta soprattutto alla flessibilità del linguaggio, che permette di rendere il software indipendente
+dal browser e compatibile con tutti i sistemi.</p>
+</div>
+<div class="section" id="caratteristiche">
+<h1>Caratteristiche<a class="headerlink" href="#caratteristiche" title="Link a questa intestazione">¶</a></h1>
+<ul class="simple">
+<li><p>Firma di documenti PDF, visibile e invisibile</p></li>
+<li><p>Firma di documenti in P7M, parallelo e innestate</p></li>
+</ul>
+</div>
+<div class="section" id="installazione">
+<h1>Installazione<a class="headerlink" href="#installazione" title="Link a questa intestazione">¶</a></h1>
+<p>Per installare l’applicazione su sistemi Windows bisogna eseguire il setup il quale installerà le librerie necessarie per l’esecuzione su Windows ovvero
+<a class="reference external" href="https://www.microsoft.com/it-IT/download/details.aspx?id=53840">Microsoft Visual C++ 2015 Redistributable Update 3</a> le quali permettono
+al software di auto aggiornarsi nel caso vengano rilasciati nuovi aggiornamenti.
+L’applicazione viene installata nella home dell’utente corrente (Current User) nella cartella <strong>AppData/Roaming</strong>, quindi un utente generico può
+installarla. Durante il processo di installazione viene fatto un controllo per verificare la presenza delle Redistributable, se non sono presenti
+viene chiesto di installarle ed in tal caso c’è bisogno che l’utente abbia i permessi di amministratore oppure fornirne le credenziali,
+se invece sono già installate l’installazione si conclude normalmente.</p>
+<p>L’installer crea un protocollo, un’associazione di un URL con un eseguibile che viene lanciato quando questo viene chiamato.
+La creazione del protocollo avviene attraverso l’inserimento di una chiave nel registro di sistema per l’utente corrente.
+Un esempio di chiamata dell’URL è il seguente:
+<cite>firmajr://&lt;parametri&gt;</cite></p>
+</div>
+<div class="section" id="utilizzo">
+<h1>Utilizzo<a class="headerlink" href="#utilizzo" title="Link a questa intestazione">¶</a></h1>
+<p>Allo stato attuale FirmaJR agisce soltanto quando viene effettuata una richiesta da un’applicazione web,
+è previsto in futuro l’utilizzo come client standalone con una propria GUI.</p>
+<p>Per i dettagli di utilizzo visitare la sezione apposita. &lt;inserire link&gt;</p>
+</div>
+<div class="section" id="contenuti">
+<h1>Contenuti<a class="headerlink" href="#contenuti" title="Link a questa intestazione">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flusso.html">Flusso di esecuzione</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="flusso.html#avvio-firma-lato-web-application">Avvio firma lato web application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flusso.html#operazioni-preliminari">Operazioni preliminari</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="flusso.html#parsing-url-e-recupero-parametri">Parsing URL e recupero parametri</a></li>
+<li class="toctree-l3"><a class="reference internal" href="flusso.html#controllo-degli-aggiornamenti">Controllo degli aggiornamenti</a></li>
+<li class="toctree-l3"><a class="reference internal" href="flusso.html#controllo-del-certificato">Controllo del certificato</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="flusso.html#processo-di-firma-dei-file">Processo di firma dei file</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="firma_p7m.html">Firma P7M</a></li>
+<li class="toctree-l3"><a class="reference internal" href="firma_pdf.html">Firma PDF</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="digital_signature.html">Documentazione API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.client_config">digital_signature.client_config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.digiSign_lib">digital_signature.digiSign_lib</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.digiSign_server">digital_signature.digiSign_server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.my_config_loader">digital_signature.my_config_loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.my_logger">digital_signature.my_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.p7m_encoder">digital_signature.p7m_encoder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.pdf_builder">digital_signature.pdf_builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.pdf_signer">digital_signature.pdf_signer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.revocation_checker">digital_signature.revocation_checker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.signature_util">digital_signature.signature_util</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.singleton_type">digital_signature.singleton_type</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.update_checker">digital_signature.update_checker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.verifier">digital_signature.verifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature.verify">digital_signature.verify</a></li>
+<li class="toctree-l2"><a class="reference internal" href="digital_signature.html#module-digital_signature">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="licenza">
+<h1>Licenza<a class="headerlink" href="#licenza" title="Link a questa intestazione">¶</a></h1>
+<p>This software is licensed under the GPLv3 License. See the LICENSE file in the top distribution directory for the full license text.</p>
+</div>
+<div class="section" id="requisiti">
+<h1>Requisiti<a class="headerlink" href="#requisiti" title="Link a questa intestazione">¶</a></h1>
+<ul class="simple">
+<li><p>Python 3.*</p></li>
+<li><p><a class="reference external" href="https://github.com/pyca/cryptography">cryptography</a></p></li>
+<li><p><a class="reference external" href="https://github.com/wbond/asn1crypto">asn1crypto</a></p></li>
+<li><p><a class="reference external" href="https://pypi.org/project/pdfminer.six/">pdfminer.six</a></p></li>
+<li><p><a class="reference external" href="https://pypi.org/project/pykcs11/">pykcs11</a></p></li>
+<li><p><a class="reference external" href="https://github.com/Digital-Sapphire/PyUpdater">PyUpdater</a></p></li>
+</ul>
+</div>
+<div class="section" id="credits">
+<h1>Credits<a class="headerlink" href="#credits" title="Link a questa intestazione">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/m32/endesive">endesive</a> by <a class="reference external" href="https://github.com/m32">Grzegorz Makarewicz</a></p></li>
+</ul>
+</div>
+<div class="section" id="indici">
+<h1>Indici<a class="headerlink" href="#indici" title="Link a questa intestazione">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Indice</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Indice dei moduli</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Cerca</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="modules.html" title="capitolo successivo">&lt;no title&gt;</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

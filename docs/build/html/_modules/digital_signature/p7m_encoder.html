@@ -1,0 +1,357 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>digital_signature.p7m_encoder &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="Indice" href="../../genindex.html" />
+    <link rel="search" title="Cerca" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Codice sorgente per digital_signature.p7m_encoder</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">asn1</span> <span class="kn">import</span> <span class="n">Encoder</span><span class="p">,</span> <span class="n">Numbers</span><span class="p">,</span> <span class="n">Classes</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">my_logger</span> <span class="kn">import</span> <span class="n">MyLogger</span>
+
+
+<span class="c1">####################################################################</span>
+<span class="c1">#       CONFIGURATION                                              #</span>
+<span class="c1">####################################################################</span>
+<span class="c1"># UTCTime tag</span>
+<span class="n">UTC_TIME</span> <span class="o">=</span> <span class="mh">0x17</span>
+<span class="c1"># [0] tag</span>
+<span class="n">ZERO_TAG</span> <span class="o">=</span> <span class="mh">0x00</span>
+<span class="c1"># List of SNMP values for asn1 tags</span>
+<span class="n">PKCS7</span> <span class="o">=</span> <span class="s2">&quot;1.2.840.113549.1.7.1&quot;</span>
+<span class="n">PKCS7_SIGNED_DATA</span> <span class="o">=</span> <span class="s2">&quot;1.2.840.113549.1.7.2&quot;</span>
+<span class="n">PKCS9_CONTENT_TYPE</span> <span class="o">=</span> <span class="s2">&quot;1.2.840.113549.1.9.3&quot;</span>
+<span class="n">PKCS9_MESSAGE_DIGEST</span> <span class="o">=</span> <span class="s2">&quot;1.2.840.113549.1.9.4&quot;</span>
+<span class="n">SHA256</span> <span class="o">=</span> <span class="s2">&quot;2.16.840.1.101.3.4.2.1&quot;</span>
+<span class="n">RSA</span> <span class="o">=</span> <span class="s2">&quot;1.2.840.113549.1.1.1&quot;</span>
+<span class="n">SIGNING_TIME</span> <span class="o">=</span> <span class="s2">&quot;1.2.840.113549.1.9.5&quot;</span>
+<span class="n">SIGNING_CERTIFICATE_V2</span> <span class="o">=</span> <span class="s2">&quot;1.2.840.113549.1.9.16.2.47&quot;</span>
+<span class="c1">####################################################################</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">MyLogger</span><span class="p">()</span><span class="o">.</span><span class="n">my_logger</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="P7mAttributes"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.p7m_encoder.P7mAttributes">[documenti]</a><span class="k">class</span> <span class="nc">P7mAttributes</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algos</span><span class="p">,</span> <span class="n">certificates</span><span class="p">,</span> <span class="n">signer_infos</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">algos</span> <span class="o">=</span> <span class="n">algos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">certificates</span> <span class="o">=</span> <span class="n">certificates</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signer_infos</span> <span class="o">=</span> <span class="n">signer_infos</span></div>
+
+<span class="c1"># noinspection PyProtectedMember</span>
+<div class="viewcode-block" id="P7mEncoder"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.p7m_encoder.P7mEncoder">[documenti]</a><span class="k">class</span> <span class="nc">P7mEncoder</span><span class="p">:</span>
+
+<div class="viewcode-block" id="P7mEncoder.make_a_p7m"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.p7m_encoder.P7mEncoder.make_a_p7m">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">make_a_p7m</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">signer_info</span><span class="p">,</span> <span class="n">p7m_sig_attrs</span><span class="p">:</span> <span class="n">P7mAttributes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return a well formed complete p7m</span>
+
+<span class="sd">            Param:</span>
+<span class="sd">                content: file content to sign</span>
+<span class="sd">                certificate_value: value field of the smart card certificate</span>
+<span class="sd">                signer_info: signer info in asn1 form</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">p7m</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;encoding p7m&quot;</span><span class="p">)</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">PKCS7_SIGNED_DATA</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">ZERO_TAG</span><span class="p">,</span> <span class="n">Classes</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>  <span class="c1"># 2</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 3</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">P7mEncoder</span><span class="o">.</span><span class="n">_version_number</span><span class="p">())</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>  <span class="c1"># 4</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">P7mEncoder</span><span class="o">.</span><span class="n">_digest_algorithm</span><span class="p">()</span> <span class="o">+</span> <span class="n">p7m_sig_attrs</span><span class="o">.</span><span class="n">algos</span><span class="p">)</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 4</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">P7mEncoder</span><span class="o">.</span><span class="n">_content_info</span><span class="p">(</span><span class="n">content</span><span class="p">))</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">ZERO_TAG</span><span class="p">,</span> <span class="n">Classes</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>  <span class="c1"># 4</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">certificate_value</span> <span class="o">+</span> <span class="n">p7m_sig_attrs</span><span class="o">.</span><span class="n">certificates</span><span class="p">)</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 4</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">signer_info</span><span class="p">)</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 3</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 2</span>
+        <span class="n">p7m</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="k">return</span> <span class="n">p7m</span><span class="o">.</span><span class="n">output</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="P7mEncoder.encode_signer_info"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.p7m_encoder.P7mEncoder.encode_signer_info">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode_signer_info</span><span class="p">(</span><span class="n">issuer</span><span class="p">,</span> <span class="n">serial_number</span><span class="p">,</span>
+                           <span class="n">signed_attributes</span><span class="p">,</span> <span class="n">signed_bytes</span><span class="p">,</span> <span class="n">existing_sig_infos</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a well formed signer info p7m field</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                issuer: smart card certificate issuer (bytes)</span>
+<span class="sd">                serial_number: smart card serial number (int)</span>
+<span class="sd">                signed_attributes: signed attributes p7m field</span>
+<span class="sd">                signed_bytes: signature (bytes)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">signer_info</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;encoding signer info&quot;</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 2</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">P7mEncoder</span><span class="o">.</span><span class="n">_version_number</span><span class="p">())</span>
+
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 3</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">issuer</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">serial_number</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 3</span>
+
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 3</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">SHA256</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">Null</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 3</span>
+
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">signed_attributes</span><span class="p">)</span>
+
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 3</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">RSA</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">Null</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 3</span>
+
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">signed_bytes</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">OctetString</span><span class="p">)</span>
+
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 2</span>
+        <span class="k">if</span> <span class="n">existing_sig_infos</span> <span class="o">!=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">signer_info</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">existing_sig_infos</span><span class="p">)</span>
+        <span class="n">signer_info</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="k">return</span> <span class="n">signer_info</span><span class="o">.</span><span class="n">output</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="P7mEncoder.encode_signed_attributes"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.p7m_encoder.P7mEncoder.encode_signed_attributes">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode_signed_attributes</span><span class="p">(</span><span class="n">content_hash</span><span class="p">,</span> <span class="n">certificate_hash</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a well formed signed attributes p7m field</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                content_hash: content digest</span>
+<span class="sd">                certificate_hash: certificate digest</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">signed_attributes</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;encoding signed attributes&quot;</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">ZERO_TAG</span><span class="p">,</span> <span class="n">Classes</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">P7mEncoder</span><span class="o">.</span><span class="n">_get_signed_attributes</span><span class="p">(</span>
+            <span class="n">content_hash</span><span class="p">,</span> <span class="n">certificate_hash</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">signed_attributes</span><span class="o">.</span><span class="n">output</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="P7mEncoder.bytes_to_sign"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.p7m_encoder.P7mEncoder.bytes_to_sign">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">bytes_to_sign</span><span class="p">(</span><span class="n">content_hash</span><span class="p">,</span> <span class="n">certificate_hash</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the p7m part that needs to be signed</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                content_hash: content digest</span>
+<span class="sd">                certificate_hash: certificate digest</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">signed_attributes</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;building bytes to sign&quot;</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">_emit</span><span class="p">(</span><span class="n">P7mEncoder</span><span class="o">.</span><span class="n">_get_signed_attributes</span><span class="p">(</span>
+            <span class="n">content_hash</span><span class="p">,</span> <span class="n">certificate_hash</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">signed_attributes</span><span class="o">.</span><span class="n">output</span><span class="p">()</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_signed_attributes</span><span class="p">(</span><span class="n">content_hash</span><span class="p">,</span> <span class="n">certificate_hash</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return core signed attributes</span>
+<span class="sd">                to get the p7m field call `encode_signed_attributes` instead</span>
+<span class="sd">                to get the signature input call `bytes_to_sign` instead</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                content_hash: content digest</span>
+<span class="sd">                certificate_hash: certificate digest</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">signed_attributes</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">PKCS9_CONTENT_TYPE</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">PKCS7</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">SIGNING_TIME</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">UTC_TIME</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">PKCS9_MESSAGE_DIGEST</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content_hash</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">OctetString</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">SIGNING_CERTIFICATE_V2</span><span class="p">,</span>
+                                <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Set</span><span class="p">)</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 3</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 4</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 5</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 6</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">SHA256</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 6</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">certificate_hash</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">OctetString</span><span class="p">)</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 5</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 4</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 3</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 2</span>
+        <span class="n">signed_attributes</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="k">return</span> <span class="n">signed_attributes</span><span class="o">.</span><span class="n">output</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_version_number</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;Return p7m version number field (always 1)&quot;&quot;&quot;</span>
+        <span class="n">version_number</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">version_number</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="c1"># Always 1</span>
+        <span class="n">version_number</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">Integer</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">version_number</span><span class="o">.</span><span class="n">output</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_digest_algorithm</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;Return p7m digest algorithm field (SHA256)&quot;&quot;&quot;</span>
+        <span class="n">digest_algorithm</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">digest_algorithm</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">digest_algorithm</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">digest_algorithm</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">SHA256</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">digest_algorithm</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">Null</span><span class="p">)</span>
+        <span class="n">digest_algorithm</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="k">return</span> <span class="n">digest_algorithm</span><span class="o">.</span><span class="n">output</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_content_info</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return p7m content info field&quot;&quot;&quot;</span>
+
+        <span class="n">data_content</span> <span class="o">=</span> <span class="n">Encoder</span><span class="p">()</span>
+        <span class="n">data_content</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="n">data_content</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">Numbers</span><span class="o">.</span><span class="n">Sequence</span><span class="p">)</span>  <span class="c1"># 1</span>
+        <span class="n">data_content</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">PKCS7</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">ObjectIdentifier</span><span class="p">)</span>
+        <span class="n">data_content</span><span class="o">.</span><span class="n">enter</span><span class="p">(</span><span class="n">ZERO_TAG</span><span class="p">,</span> <span class="n">Classes</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>  <span class="c1"># 2</span>
+        <span class="n">data_content</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">Numbers</span><span class="o">.</span><span class="n">OctetString</span><span class="p">)</span>
+        <span class="n">data_content</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 2</span>
+        <span class="n">data_content</span><span class="o">.</span><span class="n">leave</span><span class="p">()</span>  <span class="c1"># 1</span>
+
+        <span class="k">return</span> <span class="n">data_content</span><span class="o">.</span><span class="n">output</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_timestamp</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot; Return UTC timestamp in p7m compatible format &quot;&quot;&quot;</span>
+
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%y%m</span><span class="si">%d</span><span class="s2">%H%M%SZ&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Codice del modulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

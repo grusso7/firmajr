@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>digital_signature.verifier &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="Indice" href="../../genindex.html" />
+    <link rel="search" title="Cerca" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Codice sorgente per digital_signature.verifier</h1><div class="highlight"><pre>
+<span></span><span class="c1"># *-* coding: utf-8 *-*</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+
+<span class="kn">from</span> <span class="nn">OpenSSL</span> <span class="kn">import</span> <span class="n">crypto</span>
+<span class="kn">from</span> <span class="nn">asn1crypto</span> <span class="kn">import</span> <span class="n">x509</span><span class="p">,</span> <span class="n">core</span><span class="p">,</span> <span class="n">pem</span><span class="p">,</span> <span class="n">cms</span>
+<span class="kn">from</span> <span class="nn">cryptography.hazmat.primitives</span> <span class="kn">import</span> <span class="n">hashes</span>
+<span class="kn">from</span> <span class="nn">cryptography.hazmat.primitives.asymmetric</span> <span class="kn">import</span> <span class="n">padding</span>
+
+
+<div class="viewcode-block" id="VerifyData"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.verifier.VerifyData">[documenti]</a><span class="k">class</span> <span class="nc">VerifyData</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trustedCerts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">crypto</span><span class="o">.</span><span class="n">X509Store</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">trustedCerts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">cert</span> <span class="ow">in</span> <span class="n">trustedCerts</span><span class="p">:</span>
+                <span class="n">cert</span> <span class="o">=</span> <span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_ASN1</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">cert</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_cert</span><span class="p">(</span><span class="n">cert</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VerifyData.add_cert"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.verifier.VerifyData.add_cert">[documenti]</a>    <span class="k">def</span> <span class="nf">add_cert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trusted_cert</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">add_cert</span><span class="p">(</span><span class="n">trusted_cert</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VerifyData.verify_cert"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.verifier.VerifyData.verify_cert">[documenti]</a>    <span class="k">def</span> <span class="nf">verify_cert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cert_pem</span><span class="p">):</span>
+        <span class="n">certificate</span> <span class="o">=</span> <span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">cert_pem</span><span class="p">)</span>
+        <span class="c1"># Create a X590StoreContext with the cert and trusted certs</span>
+        <span class="c1"># and verify the the chain of trust</span>
+        <span class="n">store_ctx</span> <span class="o">=</span> <span class="n">crypto</span><span class="o">.</span><span class="n">X509StoreContext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span>
+        <span class="c1"># Returns None if certificate can be validated</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">store_ctx</span><span class="o">.</span><span class="n">verify_certificate</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_load_cert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relative_path</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">relative_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">cert_bytes</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pem</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">cert_bytes</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">cert_bytes</span> <span class="o">=</span> <span class="n">pem</span><span class="o">.</span><span class="n">unarmor</span><span class="p">(</span><span class="n">cert_bytes</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">x509</span><span class="o">.</span><span class="n">Certificate</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cert_bytes</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VerifyData.verify"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.verifier.VerifyData.verify">[documenti]</a>    <span class="k">def</span> <span class="nf">verify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datas</span><span class="p">,</span> <span class="n">datau</span><span class="p">):</span>
+        <span class="n">signed_data</span> <span class="o">=</span> <span class="n">cms</span><span class="o">.</span><span class="n">ContentInfo</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">datas</span><span class="p">)[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+        <span class="c1"># signed_data.debug()</span>
+
+        <span class="n">signature</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;signer_infos&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">native</span><span class="p">[</span><span class="s1">&#39;signature&#39;</span><span class="p">]</span>
+        <span class="n">algo</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;digest_algorithms&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;algorithm&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">native</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;signer_infos&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;signed_attrs&#39;</span><span class="p">]</span>
+        <span class="n">mdData</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">hashlib</span><span class="p">,</span> <span class="n">algo</span><span class="p">)(</span><span class="n">datau</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">attrs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="n">core</span><span class="o">.</span><span class="n">Void</span><span class="p">):</span>
+            <span class="n">mdSigned</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">attr</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">native</span> <span class="o">==</span> <span class="s1">&#39;message_digest&#39;</span><span class="p">:</span>
+                    <span class="n">mdSigned</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">native</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">signedData</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">dump</span><span class="p">()</span>
+            <span class="n">signedData</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x31</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">signedData</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mdSigned</span> <span class="o">=</span> <span class="n">mdData</span>
+            <span class="n">signedData</span> <span class="o">=</span> <span class="n">datau</span>
+        <span class="n">hashok</span> <span class="o">=</span> <span class="n">mdData</span> <span class="o">==</span> <span class="n">mdSigned</span>
+        <span class="n">serial</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;signer_infos&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;sid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">native</span><span class="p">[</span><span class="s1">&#39;serial_number&#39;</span><span class="p">]</span>
+        <span class="n">public_key</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">cert</span> <span class="ow">in</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;certificates&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">serial</span> <span class="o">==</span> <span class="n">cert</span><span class="o">.</span><span class="n">native</span><span class="p">[</span><span class="s1">&#39;tbs_certificate&#39;</span><span class="p">][</span><span class="s1">&#39;serial_number&#39;</span><span class="p">]:</span>
+                <span class="n">cert</span> <span class="o">=</span> <span class="n">cert</span><span class="o">.</span><span class="n">dump</span><span class="p">()</span>
+                <span class="n">cert</span> <span class="o">=</span> <span class="n">pem</span><span class="o">.</span><span class="n">armor</span><span class="p">(</span><span class="sa">u</span><span class="s1">&#39;CERTIFICATE&#39;</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
+                <span class="n">public_key</span> <span class="o">=</span> <span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_PEM</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span><span class="o">.</span><span class="n">get_pubkey</span><span class="p">()</span><span class="o">.</span><span class="n">to_cryptography_key</span><span class="p">()</span>
+                <span class="k">break</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">public_key</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span>
+                <span class="n">signature</span><span class="p">,</span>
+                <span class="n">signedData</span><span class="p">,</span>
+                <span class="n">padding</span><span class="o">.</span><span class="n">PKCS1v15</span><span class="p">(),</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">hashes</span><span class="p">,</span> <span class="n">algo</span><span class="o">.</span><span class="n">upper</span><span class="p">())()</span>
+            <span class="p">)</span>
+            <span class="n">signatureok</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">signatureok</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># Certificates alread verified</span>
+        <span class="n">certok</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;hashok?&#39;</span><span class="p">:</span> <span class="n">hashok</span><span class="p">,</span> <span class="s1">&#39;signatureok?&#39;</span><span class="p">:</span> <span class="n">signatureok</span><span class="p">,</span> <span class="s1">&#39;certok?&#39;</span><span class="p">:</span> <span class="n">certok</span><span class="p">}</span></div></div>
+
+
+<div class="viewcode-block" id="verify"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.verifier.verify">[documenti]</a><span class="k">def</span> <span class="nf">verify</span><span class="p">(</span><span class="n">datas</span><span class="p">,</span> <span class="n">datau</span><span class="p">,</span> <span class="n">certs</span><span class="p">):</span>
+    <span class="bp">cls</span> <span class="o">=</span> <span class="n">VerifyData</span><span class="p">(</span><span class="n">certs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">datas</span><span class="p">,</span> <span class="n">datau</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Codice del modulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

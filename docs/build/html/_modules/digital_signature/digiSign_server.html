@@ -1,0 +1,953 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>digital_signature.digiSign_server &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="Indice" href="../../genindex.html" />
+    <link rel="search" title="Cerca" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Codice sorgente per digital_signature.digiSign_server</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">mimetypes</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">validators</span>
+
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">digiSign_lib</span> <span class="kn">import</span> <span class="n">DigiSignLib</span><span class="p">,</span> <span class="n">CertificateOwnerException</span><span class="p">,</span> <span class="n">CertificateValidityError</span>
+<span class="kn">from</span> <span class="nn">my_config_loader</span> <span class="kn">import</span> <span class="n">MyConfigLoader</span>
+<span class="kn">from</span> <span class="nn">my_logger</span> <span class="kn">import</span> <span class="n">MyLogger</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span><span class="p">,</span> <span class="n">remove</span><span class="p">,</span> <span class="n">sys</span><span class="p">,</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">makedirs</span><span class="p">,</span> <span class="n">environ</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">post</span><span class="p">,</span> <span class="n">get</span>
+<span class="kn">from</span> <span class="nn">revocation_checker</span> <span class="kn">import</span> <span class="n">RevocationChecker</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">move</span>
+<span class="kn">from</span> <span class="nn">tkinter</span> <span class="kn">import</span> <span class="n">Tk</span><span class="p">,</span> <span class="n">Entry</span><span class="p">,</span> <span class="n">Label</span><span class="p">,</span> <span class="n">Button</span><span class="p">,</span> <span class="n">Frame</span><span class="p">,</span> <span class="n">messagebox</span><span class="p">,</span> <span class="n">LEFT</span>
+<span class="kn">from</span> <span class="nn">traceback</span> <span class="kn">import</span> <span class="n">extract_tb</span>
+<span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span> <span class="k">as</span> <span class="n">urlfile</span>
+<span class="kn">from</span> <span class="nn">update_checker</span> <span class="kn">import</span> <span class="n">check_for_updates</span><span class="p">,</span> <span class="n">run_updates</span><span class="p">,</span> <span class="n">UPDATE_STATUS_STR</span><span class="p">,</span> <span class="n">UpdateStatus</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+
+<span class="c1">####################################################################</span>
+<span class="c1">#       CONFIGURATION                                              #</span>
+<span class="c1">####################################################################</span>
+<span class="c1"># url</span>
+<span class="n">HOST</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;host&quot;</span><span class="p">]</span>
+<span class="n">PORT</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;port&quot;</span><span class="p">]</span>
+<span class="n">PROTOCOL</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span>
+<span class="c1"># mapped directories</span>
+<span class="c1"># TEMPLATE_FOLDER = MyConfigLoader().get_server_config()[&quot;template_folder&quot;]</span>
+<span class="n">UPLOAD_FOLDER</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;uploaded_file_folder&quot;</span><span class="p">]</span>
+<span class="n">SIGNED_FOLDER</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;signed_file_folder&quot;</span><span class="p">]</span>
+<span class="n">LOGS_FOLDER</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_logger_config</span><span class="p">()[</span><span class="s2">&quot;log_folder&quot;</span><span class="p">]</span>
+<span class="c1"># Allowed signature types</span>
+<span class="n">P7M</span> <span class="o">=</span> <span class="s2">&quot;p7m&quot;</span>
+<span class="n">PDF</span> <span class="o">=</span> <span class="s2">&quot;pdf&quot;</span>
+<span class="n">ALLOWED_SIGNATURE_TYPES</span> <span class="o">=</span> <span class="p">{</span><span class="n">P7M</span><span class="p">,</span> <span class="n">PDF</span><span class="p">}</span>
+<span class="c1"># Memorized pin</span>
+<span class="n">user_session</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">SESSION_TIMEOUT</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;pin_validity_time&quot;</span><span class="p">]</span>
+<span class="c1"># Statuses</span>
+<span class="n">GOOD</span> <span class="o">=</span> <span class="n">RevocationChecker</span><span class="p">()</span><span class="o">.</span><span class="n">GOOD</span>
+<span class="n">UNKNOWN</span> <span class="o">=</span> <span class="n">RevocationChecker</span><span class="p">()</span><span class="o">.</span><span class="n">UNKNOWN</span>
+<span class="n">REVOKED</span> <span class="o">=</span> <span class="n">RevocationChecker</span><span class="p">()</span><span class="o">.</span><span class="n">REVOKED</span>
+<span class="n">ERROR</span> <span class="o">=</span> <span class="n">RevocationChecker</span><span class="p">()</span><span class="o">.</span><span class="n">ERROR</span>
+<span class="c1">####################################################################</span>
+
+
+<div class="viewcode-block" id="SignStatus"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.SignStatus">[documenti]</a><span class="k">class</span> <span class="nc">SignStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">SIGNED</span> <span class="o">=</span> <span class="s2">&quot;signed&quot;</span>
+    <span class="n">ABORTED</span> <span class="o">=</span> <span class="s2">&quot;aborted&quot;</span>
+    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span>
+    <span class="n">PARTIALLY_SIGNED</span> <span class="o">=</span> <span class="s2">&quot;partially_signed&quot;</span></div>
+
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">MyLogger</span><span class="p">()</span><span class="o">.</span><span class="n">my_logger</span><span class="p">()</span>
+<span class="n">update_thread_launched</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="c1">####################################################################</span>
+<span class="c1">#       REST API                                                   #</span>
+<span class="c1">####################################################################</span>
+<div class="viewcode-block" id="handle_sign"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.handle_sign">[documenti]</a><span class="k">def</span> <span class="nf">handle_sign</span><span class="p">(</span><span class="n">start_params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metodo principale. Effettua il parsing dei parametri contenuti nell&#39;URL lanciato dalla web application,</span>
+<span class="sd">    recupero dei parametri, controllo degli aggiornamenti e avvio processo di firma.</span>
+
+<span class="sd">    :param start_params: È l&#39;URL completo aperto nel browser</span>
+<span class="sd">    :type start_params: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">start_params</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">start_params</span> <span class="o">=</span> <span class="n">get_sign_resume</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start_params</span> <span class="o">=</span> <span class="n">start_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">start_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;No file to sign or empty array params&quot;</span><span class="p">)</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Parameters from protocol = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">start_params</span><span class="p">)</span>
+
+    <span class="n">tolkien_list</span> <span class="o">=</span> <span class="n">start_params</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">tolkien_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">PROTOCOL</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Token: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">token</span><span class="p">)</span>
+    <span class="n">rev_url_encoded</span> <span class="o">=</span> <span class="n">tolkien_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">rev_url</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">rev_url_encoded</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Revocation Url: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">rev_url</span><span class="p">)</span>
+
+    <span class="c1"># Check for upload and signed folder</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">):</span>
+        <span class="n">makedirs</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">):</span>
+        <span class="n">makedirs</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">)</span>
+
+    <span class="c1"># remove this for prod</span>
+    <span class="c1"># if &quot;HTTP_PROXY&quot; in environ:</span>
+    <span class="c1">#     del environ[&quot;HTTP_PROXY&quot;]</span>
+
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;getting paramaters...&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">rev_url</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">token</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="n">signature_params</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;parameters found: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">signature_params</span><span class="p">)</span>
+
+            <span class="c1"># checking for client updates</span>
+            <span class="n">update_checker_url</span> <span class="o">=</span> <span class="n">signature_params</span><span class="p">[</span><span class="s2">&quot;update_checker_url&quot;</span><span class="p">]</span>
+            <span class="n">status_update</span> <span class="o">=</span> <span class="n">updates_manager</span><span class="p">(</span><span class="n">start_params</span><span class="p">,</span> <span class="n">update_checker_url</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">status_update</span><span class="p">)</span>
+
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;signing...&quot;</span><span class="p">)</span>
+            <span class="n">master_document_id</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="s2">&quot;masterDocumentId&quot;</span> <span class="ow">in</span> <span class="n">signature_params</span><span class="p">:</span>
+                <span class="n">master_document_id</span> <span class="o">=</span> <span class="n">signature_params</span><span class="p">[</span><span class="s2">&quot;masterDocumentId&quot;</span><span class="p">]</span>
+            <span class="n">end_sign_manager_url</span> <span class="o">=</span> <span class="n">signature_params</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;endSignManagerUrl&#39;</span><span class="p">]</span>
+            <span class="n">result_channel</span> <span class="o">=</span> <span class="n">signature_params</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;resultChannel&#39;</span><span class="p">]</span>
+            <span class="n">sign_result</span> <span class="o">=</span> <span class="n">sign</span><span class="p">(</span><span class="n">signature_params</span><span class="p">)</span>
+            <span class="c1"># chiamare la endSignServletHere</span>
+            <span class="n">response_maker</span><span class="p">(</span><span class="n">end_sign_manager_url</span><span class="p">,</span> <span class="n">result_channel</span><span class="p">,</span> <span class="n">sign_result</span><span class="p">,</span> <span class="n">master_document_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+            <span class="n">show_warning_message</span><span class="p">(</span><span class="s2">&quot;Errore durante il reperimento dei dati per la firma. &quot;</span>
+                                 <span class="s2">&quot;Riprovare o contattare il servizio di assistenza.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ConnectionError</span> <span class="k">as</span> <span class="n">conn_err</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">conn_err</span><span class="p">)</span>
+        <span class="n">show_warning_message</span><span class="p">(</span><span class="s2">&quot;Impossibile stabilire una connessione con il server. Contattare l&#39;assistenza.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;error: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+        <span class="n">show_warning_message</span><span class="p">(</span><span class="s2">&quot;Errore, contattare il servizio di assistenza.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sign"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.sign">[documenti]</a><span class="k">def</span> <span class="nf">sign</span><span class="p">(</span><span class="n">json_parsed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metodo principale per la gestione del processo di firma dei file passati come parametro</span>
+
+<span class="sd">    :param json_parsed: Il json contenente i parametri e i file da firmare</span>
+<span class="sd">    :type json_parsed: str</span>
+<span class="sd">    :return: Lista contenente lo status della firma e la lista dei file firmati oppure un messaggio in caso di errore</span>
+<span class="sd">    :rtype: List[SignStatus, json]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">###################################</span>
+    <span class="c1"># JSON structure:</span>
+    <span class="c1"># {</span>
+    <span class="c1">#     user_id: codice_fiscale // &quot;X&quot;*15 to skip check,</span>
+    <span class="c1">#     masterDocumentId: masterDocumentId,</span>
+    <span class="c1">#     file_list: [</span>
+    <span class="c1">#         {</span>
+    <span class="c1">#             file: file_path,</span>
+    <span class="c1">#             file_id: id,</span>
+    <span class="c1">#             file_mime_type: file_mime_type,</span>
+    <span class="c1">#             file_name: file_name,</span>
+    <span class="c1">#             file_type: file_type (Es. DocumentoPicoNuovoPU),</span>
+    <span class="c1">#             file_data: {file additional data (only a bag)},</span>
+    <span class="c1">#             signed_file_type: p7m|pdf</span>
+    <span class="c1">#             &quot;destination&quot;: destination_path,</span>
+    <span class="c1">#             &quot;sig_attributes&quot;: {</span>
+    <span class="c1">#                 &quot;visibility&quot;: visibility,</span>
+    <span class="c1">#                 &quot;position&quot;: {</span>
+    <span class="c1">#                     &quot;page&quot;: &#39;n&#39;,</span>
+    <span class="c1">#                     &quot;width&quot;: 200.0,</span>
+    <span class="c1">#                     &quot;height&quot;: 60.0,</span>
+    <span class="c1">#                     &quot;padding_width&quot;: 75.0,</span>
+    <span class="c1">#                     &quot;padding_height&quot;: 670.0,</span>
+    <span class="c1">#                     &quot;signature_name&quot;: &quot;Signature&quot;</span>
+    <span class="c1">#                 },</span>
+    <span class="c1">#                 &quot;p7m_sig_type&quot;: p7m_sig_type,</span>
+    <span class="c1">#                 &quot;text_template&quot;: &quot;&quot;,</span>
+    <span class="c1">#             }</span>
+    <span class="c1">#         },</span>
+    <span class="c1">#         ...</span>
+    <span class="c1">#     ],</span>
+    <span class="c1">#     test_mode: true|false,</span>
+    <span class="c1">#     update_checker_url: [optional],</span>
+    <span class="c1">#     revocation_checker_url: [optional],</span>
+    <span class="c1">#     uploader: &quot;http://localhost:8095/&quot;,</span>
+    <span class="c1">#     params: {</span>
+    <span class="c1">#       azienda: codice_azienda,</span>
+    <span class="c1">#       serverIdentifier: serverIdentifier,</span>
+    <span class="c1">#       resultChannel: resultChannel,</span>
+    <span class="c1">#       endSignManagerUrl: servlet di fine firma</span>
+    <span class="c1">#     }</span>
+    <span class="c1"># }</span>
+    <span class="c1">###################################</span>
+
+    <span class="k">if</span> <span class="s2">&quot;user_id&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_parsed</span><span class="p">:</span>
+        <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;missing user_id field&quot;</span>
+        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">json_parsed</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;file_list&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_parsed</span><span class="p">:</span>
+        <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;missing file_list field&quot;</span>
+        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+    <span class="n">file_list</span> <span class="o">=</span> <span class="n">json_parsed</span><span class="p">[</span><span class="s2">&quot;file_list&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_list</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,))</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">file_list</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;Empty file_list&quot;</span>
+        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">json_file</span> <span class="ow">in</span> <span class="n">file_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;file&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_file</span><span class="p">:</span>
+            <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;missing file field&quot;</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;signed_file_type&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_file</span><span class="p">:</span>
+            <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;missing signed_file_type field&quot;</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+        <span class="n">sig_type</span> <span class="o">=</span> <span class="n">json_file</span><span class="p">[</span><span class="s2">&quot;signed_file_type&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="s2">&quot;sig_attributes&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_file</span><span class="p">:</span>
+            <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;missing sig_attributes field&quot;</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">allowed_signature</span><span class="p">(</span><span class="n">sig_type</span><span class="p">):</span>
+            <span class="n">error_message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{sig_type}</span><span class="s2"> not allowed in signed_file_type field&quot;</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;uploader&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_parsed</span><span class="p">:</span>
+        <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;missing output_path field&quot;</span>
+        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+    <span class="n">path_for_signed_files</span> <span class="o">=</span> <span class="n">json_parsed</span><span class="p">[</span><span class="s2">&quot;uploader&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Check per la destinazione dei file firmati</span>
+    <span class="n">output_to_url</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">validators</span><span class="o">.</span><span class="n">url</span><span class="p">(</span><span class="n">path_for_signed_files</span><span class="p">):</span>
+        <span class="n">output_to_url</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_for_signed_files</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path_for_signed_files</span><span class="p">):</span>
+            <span class="n">error_message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{path_for_signed_files}</span><span class="s2"> field is not a valid directory&quot;</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+
+    <span class="c1"># folder cleanup</span>
+    <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">):</span>
+        <span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">,</span> <span class="n">_file</span><span class="p">))</span>
+
+    <span class="c1"># getting params</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s2">&quot;params&quot;</span> <span class="ow">in</span> <span class="n">json_parsed</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">json_parsed</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span>
+
+    <span class="c1"># getting revocation server url</span>
+    <span class="k">if</span> <span class="s2">&quot;revocation_checker_url&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">json_parsed</span><span class="p">:</span>
+        <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;revocation_checker_url not found. Can&#39;t procede to revocation check&quot;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+        <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">error_message</span><span class="p">)</span>
+
+    <span class="n">revocation_checker_url</span> <span class="o">=</span> <span class="n">json_parsed</span><span class="p">[</span><span class="s2">&quot;revocation_checker_url&quot;</span><span class="p">]</span>
+
+    <span class="c1"># checking for test mode</span>
+    <span class="n">test_mode</span> <span class="o">=</span> <span class="n">json_parsed</span><span class="p">[</span><span class="s2">&quot;test_mode&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">test_mode</span><span class="p">:</span>
+        <span class="c1"># getting smart cards connected</span>
+        <span class="n">sessions</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sessions</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_smart_cards_sessions</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+            <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Controllare che la smart card sia inserita correttamente&quot;</span><span class="p">)</span>
+
+        <span class="c1"># attempt to login</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">get_pin</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;pin&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pin not valid&quot;</span><span class="p">)</span>
+                <span class="n">session</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_login</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;pin&quot;</span><span class="p">])</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+                <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;aborted&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ABORTED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Operazione annullata&quot;</span><span class="p">)</span>
+                <span class="n">show_warning_message</span><span class="p">(</span><span class="s2">&quot;Controllare che il pin sia valido e corretto&quot;</span><span class="p">)</span>
+
+        <span class="c1"># fetching certificate value</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">certificate</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+            <span class="n">certificate_value</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate_value</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+            <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Impossibile ottenere il certificato di firma&quot;</span><span class="p">)</span>
+
+        <span class="c1"># check for certificate status, time validity and behaviours</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">rev_serv_resp</span> <span class="o">=</span> <span class="n">get_certificate_status</span><span class="p">(</span><span class="n">revocation_checker_url</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+            <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Impossibile verificare il certificato di firma&quot;</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;revocation check results: </span><span class="si">{rev_serv_resp}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">rev_serv_resp</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">rev_serv_resp</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span>
+        <span class="n">check_cf</span> <span class="o">=</span> <span class="n">rev_serv_resp</span><span class="p">[</span><span class="s2">&quot;check_cf&quot;</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">behaviours</span> <span class="o">=</span> <span class="n">rev_serv_resp</span><span class="p">[</span><span class="s2">&quot;behaviours&quot;</span><span class="p">]</span>
+            <span class="n">block_if_expired</span> <span class="o">=</span> <span class="n">behaviours</span><span class="p">[</span><span class="s2">&quot;block_if_expired&quot;</span><span class="p">]</span>
+            <span class="n">warn_if_expired</span> <span class="o">=</span> <span class="n">behaviours</span><span class="p">[</span><span class="s2">&quot;warn_if_expired&quot;</span><span class="p">]</span>
+            <span class="n">block_on_untrusted</span> <span class="o">=</span> <span class="n">behaviours</span><span class="p">[</span><span class="s2">&quot;block_on_untrusted&quot;</span><span class="p">]</span>
+            <span class="n">message_on_untrusted</span> <span class="o">=</span> <span class="n">behaviours</span><span class="p">[</span><span class="s2">&quot;message_on_untrusted&quot;</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">block_if_expired</span> <span class="o">=</span> <span class="s2">&quot;N&quot;</span>
+            <span class="n">warn_if_expired</span> <span class="o">=</span> <span class="s2">&quot;N&quot;</span>
+            <span class="n">block_on_untrusted</span> <span class="o">=</span> <span class="s2">&quot;N&quot;</span>
+            <span class="n">message_on_untrusted</span> <span class="o">=</span> <span class="s2">&quot;N&quot;</span>
+            <span class="k">pass</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">DigiSignLib</span><span class="o">.</span><span class="n">check_certificate_time_validity</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">block_if_expired</span><span class="p">,</span> <span class="n">warn_if_expired</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+            <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Impossibile procedere, certificato scaduto!&quot;</span><span class="p">)</span>
+
+        <span class="c1"># handle certificate status</span>
+        <span class="k">if</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">REVOKED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Certificato di firma revocato! Impossibile procedere&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">block_on_untrusted</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Il certificato risulta in stato sconosciuto, &quot;</span>
+                                                        <span class="s2">&quot;impossibile procedere&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">message_on_untrusted</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;continue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span>
+                    <span class="n">choice</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="n">_unknown_certificate_choice</span><span class="p">(</span><span class="n">choice</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="s2">&quot;continue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">choice</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ABORTED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;La firma è stata interrorra dall&#39;utente&quot;</span><span class="p">)</span>
+
+                    <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;continue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">choice</span><span class="p">[</span><span class="s2">&quot;continue&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;continue&quot;</span><span class="p">]:</span>
+                    <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ABORTED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;L&#39;utente ha deciso di non procedere alla firma &quot;</span>
+                                                                    <span class="s2">&quot;a causa dello stato sconosciuto del certificato&quot;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;test mode enabled, revocation check skipped&quot;</span><span class="p">)</span>
+
+    <span class="c1"># loop on given files</span>
+    <span class="n">signature_status</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">error_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">signed_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">signed_files_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_index</span><span class="p">,</span> <span class="n">file_to_sign</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">file_list</span><span class="p">):</span>
+        <span class="c1"># taking parameters</span>
+        <span class="n">file_id</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;file_id&quot;</span><span class="p">]</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;file_name&quot;</span><span class="p">]</span>
+        <span class="n">file_type</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;file_type&quot;</span><span class="p">]</span>
+        <span class="n">file_mime_type</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;file_mime_type&quot;</span><span class="p">]</span>
+        <span class="n">file_data</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;file_data&quot;</span><span class="p">]</span>
+        <span class="n">signature_type</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;signed_file_type&quot;</span><span class="p">]</span>
+        <span class="n">file_path_to_sign</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">]</span>
+        <span class="n">sig_attributes</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;sig_attributes&quot;</span><span class="p">]</span>
+        <span class="n">destination</span> <span class="o">=</span> <span class="n">file_to_sign</span><span class="p">[</span><span class="s2">&quot;destination&quot;</span><span class="p">]</span>
+
+        <span class="c1"># initialize response structure</span>
+        <span class="n">output_item</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="n">file_path_to_sign</span><span class="p">,</span>
+                       <span class="s2">&quot;file_id&quot;</span><span class="p">:</span> <span class="n">file_id</span><span class="p">,</span>
+                       <span class="s2">&quot;file_name&quot;</span><span class="p">:</span> <span class="n">file_name</span><span class="p">,</span>
+                       <span class="s2">&quot;file_type&quot;</span><span class="p">:</span> <span class="n">file_type</span><span class="p">,</span>
+                       <span class="s2">&quot;file_mime_type&quot;</span><span class="p">:</span> <span class="n">file_mime_type</span><span class="p">,</span>
+                       <span class="s2">&quot;file_data&quot;</span><span class="p">:</span> <span class="n">file_data</span><span class="p">,</span>
+                       <span class="s2">&quot;signed_file_type&quot;</span><span class="p">:</span> <span class="n">signature_type</span><span class="p">,</span>
+                       <span class="s2">&quot;sig_attributes&quot;</span><span class="p">:</span> <span class="n">sig_attributes</span><span class="p">,</span>
+                       <span class="s2">&quot;destination&quot;</span><span class="p">:</span> <span class="n">destination</span><span class="p">,</span>
+                       <span class="s2">&quot;signed&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                       <span class="s2">&quot;signed_file&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">}</span>
+        <span class="n">signed_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_item</span><span class="p">)</span>
+
+        <span class="c1"># handle url file paths</span>
+        <span class="k">if</span> <span class="n">validators</span><span class="o">.</span><span class="n">url</span><span class="p">(</span><span class="n">file_path_to_sign</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">local_file_path</span> <span class="o">=</span> <span class="n">download_file</span><span class="p">(</span><span class="n">file_path_to_sign</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Impossibile reperire il file: </span><span class="si">{file_path_to_sign}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+                <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span>
+                <span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_count</span>
+                <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">local_file_path</span> <span class="o">=</span> <span class="n">file_path_to_sign</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;LOCAL PATH = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">local_file_path</span><span class="p">)</span>
+        <span class="n">temp_file_path</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">test_mode</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">signature_type</span> <span class="o">==</span> <span class="n">P7M</span><span class="p">:</span>
+                    <span class="c1"># p7m signature</span>
+                    <span class="n">temp_file_path</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">sign_p7m</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">,</span>
+                                                            <span class="n">timestamp</span><span class="p">,</span> <span class="n">check_cf</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">signature_type</span> <span class="o">==</span> <span class="n">PDF</span><span class="p">:</span>
+                    <span class="c1"># pdf signature</span>
+                    <span class="n">mime</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">MimeTypes</span><span class="p">()</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">mime</span> <span class="o">==</span> <span class="s1">&#39;application/pdf&#39;</span><span class="p">:</span>
+                        <span class="n">temp_file_path</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">sign_pdf</span><span class="p">(</span><span class="n">local_file_path</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span>
+                                                                <span class="n">user_id</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">check_cf</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;the file </span><span class="si">{local_file_path}</span><span class="s2"> is not a pdf will be ignored&quot;</span><span class="p">)</span>
+                        <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span>
+                        <span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_count</span>
+                        <span class="k">continue</span>
+
+                <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span>
+                <span class="n">signed_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">SIGNED</span><span class="p">]</span> <span class="o">=</span> <span class="n">signed_count</span>
+            <span class="k">except</span> <span class="n">CertificateOwnerException</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">user_tip</span> <span class="o">=</span> <span class="s2">&quot;Codice fiscale dell&#39;utente non corrispondente a quello della smart card. &quot;</span> \
+                           <span class="s2">&quot;Impossibile procedere.&quot;</span>
+                <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_logout</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+                <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_close</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">user_tip</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">CertificateValidityError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">user_tip</span> <span class="o">=</span> <span class="s2">&quot;Certificato non valido temporalmente&quot;</span>
+                <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_logout</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+                <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_close</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">user_tip</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+                <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span>
+                <span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_count</span>
+                <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;test mode enabled, signing skipped&quot;</span><span class="p">)</span>
+            <span class="n">temp_file_path</span> <span class="o">=</span> <span class="n">local_file_path</span>
+            <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;yes&quot;</span>
+            <span class="n">signed_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">SIGNED</span><span class="p">]</span> <span class="o">=</span> <span class="n">signed_count</span>
+
+        <span class="c1"># moving signed file to given destination</span>
+        <span class="k">if</span> <span class="n">output_to_url</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;moving signed file to given destination: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">path_for_signed_files</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">temp_file_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">_file</span><span class="p">:</span>
+                <span class="n">files</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;upload-file&#39;</span><span class="p">:</span> <span class="n">_file</span><span class="p">}</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;destination&#39;</span><span class="p">:</span> <span class="n">destination</span><span class="p">,</span>
+                    <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+                <span class="p">}</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">path_for_signed_files</span><span class="p">)</span>     <span class="c1"># Url uploader</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">post</span><span class="p">(</span><span class="n">path_for_signed_files</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+                    <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;EXCEPTION!!&quot;</span>
+                    <span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_count</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="n">error_message</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;error_message&quot;</span><span class="p">]</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+                    <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ERROR!!&quot;</span>
+                    <span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_count</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;file signed and uploaded&quot;</span><span class="p">)</span>
+                    <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;yes - [remote]&quot;</span>
+                    <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{res.text}</span><span class="s2">&quot;</span>
+                    <span class="n">signed_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">SIGNED</span><span class="p">]</span> <span class="o">=</span> <span class="n">signed_count</span>
+                    <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">temp_file_name</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">temp_file_path</span><span class="p">)</span>
+            <span class="n">signed_file_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_for_signed_files</span><span class="p">,</span> <span class="n">temp_file_name</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">move</span><span class="p">(</span><span class="n">temp_file_path</span><span class="p">,</span> <span class="n">signed_file_path</span><span class="p">)</span>
+                <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">signed_file_path</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+                <span class="n">signed_files_list</span><span class="p">[</span><span class="n">_index</span><span class="p">][</span><span class="s2">&quot;signed_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;LOST&quot;</span>
+                <span class="n">error_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">signature_status</span><span class="p">[</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">]</span> <span class="o">=</span> <span class="n">error_count</span>
+                <span class="k">continue</span>
+
+    <span class="c1"># Folder cleanup</span>
+    <span class="k">for</span> <span class="n">_file</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">):</span>
+        <span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">,</span> <span class="n">_file</span><span class="p">))</span>
+
+    <span class="c1"># logout</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">test_mode</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_logout</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;logout failed&quot;</span><span class="p">)</span>
+        <span class="c1"># session close</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_close</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;session close failed&quot;</span><span class="p">)</span>
+    <span class="c1">###################################</span>
+    <span class="c1"># response JSON structure:</span>
+    <span class="c1"># { signed_file_list: [</span>
+    <span class="c1">#     {</span>
+    <span class="c1">#         file_to_sign: ***,</span>
+    <span class="c1">#         signed: yes|no,</span>
+    <span class="c1">#         signed_file: ***</span>
+    <span class="c1">#     },</span>
+    <span class="c1">#     {</span>
+    <span class="c1">#         file_to_sign: ***,</span>
+    <span class="c1">#         signed: yes|no,</span>
+    <span class="c1">#         signed_file: ***</span>
+    <span class="c1">#     },</span>
+    <span class="c1">#     ...</span>
+    <span class="c1"># ]}</span>
+    <span class="c1">###################################</span>
+    <span class="k">if</span> <span class="n">SignStatus</span><span class="o">.</span><span class="n">SIGNED</span> <span class="ow">in</span> <span class="n">signature_status</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span> <span class="ow">in</span> <span class="n">signature_status</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">SignStatus</span><span class="o">.</span><span class="n">PARTIALLY_SIGNED</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">SignStatus</span><span class="o">.</span><span class="n">SIGNED</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">status</span><span class="p">,</span> <span class="n">signed_files_list</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<span class="c1">####################################################################</span>
+<span class="c1">#       UTILITIES                                                  #</span>
+<span class="c1">####################################################################</span>
+<div class="viewcode-block" id="allowed_signature"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.allowed_signature">[documenti]</a><span class="k">def</span> <span class="nf">allowed_signature</span><span class="p">(</span><span class="n">signature_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Returns if `signature_type` is allowed &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">signature_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">ALLOWED_SIGNATURE_TYPES</span></div>
+
+
+<div class="viewcode-block" id="get_sign_resume"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.get_sign_resume">[documenti]</a><span class="k">def</span> <span class="nf">get_sign_resume</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Recupera i parametri per riprendere il processo di firma in seguito ad un aggiornamento</span>
+
+<span class="sd">    :return: L&#39;URL con i parametri iniziali</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;resuming signature status...&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">,</span> <span class="s1">&#39;sign_status.dat&#39;</span><span class="p">))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">read_data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;data from file: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">read_data</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">read_data</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="save_sign_status"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.save_sign_status">[documenti]</a><span class="k">def</span> <span class="nf">save_sign_status</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Salva i parametri sul file system</span>
+
+<span class="sd">    :param params: Parametri iniziali passati all&#39;avvio dell&#39;applicazione nell&#39;URL</span>
+<span class="sd">    :type params: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving signature status...&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">,</span> <span class="s1">&#39;sign_status.dat&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;error: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ex</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Errore durante il salvataggio dei parametri per l&#39;aggiornamento&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="updates_manager"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.updates_manager">[documenti]</a><span class="k">def</span> <span class="nf">updates_manager</span><span class="p">(</span><span class="n">parameter_to_save</span><span class="p">,</span> <span class="n">update_checker_url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Gestione degli aggiornamenti. Effettua il controllo di nuovi aggiornamenti ed in tal caso salva i parametri della firma e</span>
+<span class="sd">    avvia l&#39;aggiornamento dell&#39;applicazione.</span>
+
+<span class="sd">    :param parameter_to_save: I parameteri da salvare. È l&#39;URL completo con il quale viene lanciata l&#39;applicazione.</span>
+<span class="sd">    :type parameter_to_save: str</span>
+<span class="sd">    :param update_checker_url: L&#39;url del server dove sono presenti le nuove versioni dell&#39;applicazione</span>
+<span class="sd">    :type update_checker_url: str</span>
+<span class="sd">    :return: Lo status dell&#39;aggiornamento</span>
+<span class="sd">    :rtype: UpdateStatus</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checking for client updates.. &quot;</span> <span class="o">+</span> <span class="n">update_checker_url</span><span class="p">)</span>
+    <span class="n">app_update</span> <span class="o">=</span> <span class="n">check_for_updates</span><span class="p">(</span><span class="n">update_checker_url</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">app_update</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;new update found!&quot;</span><span class="p">)</span>
+        <span class="n">save_sign_status</span><span class="p">(</span><span class="n">parameter_to_save</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;sign status saved. Start updating...&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">run_updates</span><span class="p">(</span><span class="n">app_update</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">UPDATE_STATUS_STR</span><span class="p">[</span><span class="n">UpdateStatus</span><span class="o">.</span><span class="n">NO_AVAILABLE_UPDATES</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="response_maker"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.response_maker">[documenti]</a><span class="k">def</span> <span class="nf">response_maker</span><span class="p">(</span><span class="n">url_servlet_end_sign</span><span class="p">,</span> <span class="n">_result_channel</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">master_document_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Costruisce il json con il risultato di firma e chiama la servlet di fine firma</span>
+
+<span class="sd">    :param url_servlet_end_sign: Url della servlet di fine firma</span>
+<span class="sd">    :type url_servlet_end_sign: str</span>
+<span class="sd">    :param _result_channel: Identificatore del risultato della firma su redis</span>
+<span class="sd">    :type _result_channel: str</span>
+<span class="sd">    :param result: La lista del risultato di firma, contenente lo status e la lista dei file firmati</span>
+<span class="sd">    :type result: List</span>
+<span class="sd">    :param master_document_id: Id del documento master, utilizzato dal sistema Babel nel caso del firmone</span>
+<span class="sd">    :type master_document_id: str</span>
+<span class="sd">    :return: La risposta http della servlet</span>
+<span class="sd">    :rtype: HttpResponse</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;Sending response...{url: </span><span class="si">%s</span><span class="s2">, result_channel: </span><span class="si">%s</span><span class="s2">, result: </span><span class="si">%s</span><span class="s2">, masterDocumentId: </span><span class="si">%s</span><span class="s2">}&quot;</span><span class="p">,</span>
+        <span class="n">url_servlet_end_sign</span><span class="p">,</span> <span class="n">_result_channel</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">master_document_id</span><span class="p">)</span>
+    <span class="n">res_maked</span> <span class="o">=</span> <span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url_servlet_end_sign</span><span class="p">,</span>
+                     <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                         <span class="p">{</span><span class="s2">&quot;ResultChannel&quot;</span><span class="p">:</span> <span class="n">_result_channel</span><span class="p">,</span>
+                          <span class="s2">&quot;signStatus&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                          <span class="s2">&quot;masterDocumentId&quot;</span><span class="p">:</span> <span class="n">master_document_id</span><span class="p">,</span>
+                          <span class="s2">&quot;result&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span>
+                     <span class="p">))</span>
+    <span class="k">return</span> <span class="n">res_maked</span></div>
+
+
+<div class="viewcode-block" id="error_response"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.error_response">[documenti]</a><span class="k">def</span> <span class="nf">error_response</span><span class="p">(</span><span class="n">sign_status</span><span class="p">,</span> <span class="n">error_message</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">sign_status</span><span class="p">,</span> <span class="n">error_message</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="init_session"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.init_session">[documenti]</a><span class="k">def</span> <span class="nf">init_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Initializes `user_session` associated with `user_id` &quot;&quot;&quot;</span>
+
+    <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="clear_session"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.clear_session">[documenti]</a><span class="k">def</span> <span class="nf">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Clears `user_session` associated with `user_id` &quot;&quot;&quot;</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Clearing PIN&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;timestamp&quot;</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span>
+            <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;timestamp&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;pin&quot;</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span>
+            <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;pin&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span>
+            <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;continue&quot;</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span>
+            <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;continue&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_is_session_valid</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Check if `user_id` session is expired &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">SESSION_TIMEOUT</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_certificate_status"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.get_certificate_status">[documenti]</a><span class="k">def</span> <span class="nf">get_certificate_status</span><span class="p">(</span><span class="n">revocation_checker_url</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Controllo la validità e lo stato di revoca del certificato e salva il risultato nella sessione dell&#39;utente</span>
+
+<span class="sd">    :param revocation_checker_url: Url del revocation checker server che effettua il controllo</span>
+<span class="sd">    :type revocation_checker_url: str</span>
+<span class="sd">    :param user_id: Il codice fiscale dell&#39;utente</span>
+<span class="sd">    :type user_id: str</span>
+<span class="sd">    :param certificate_value: Il certificato da controllare</span>
+<span class="sd">    :type certificate_value: bytes</span>
+<span class="sd">    :param params: Parametri personalizzabili, ed esempio nel sistema babel contengono il codice azienda</span>
+<span class="sd">    :type params: str</span>
+<span class="sd">    :return: Il json con il risultato del controllo contenente: status, behaviours, timestamp, check codice fiscale</span>
+<span class="sd">    :rtype: json</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#  Struttura del Json di risposta:</span>
+    <span class="c1"># {</span>
+    <span class="c1">#     &quot;status&quot;: &quot;status&quot;,</span>
+    <span class="c1">#     &quot;behaviours&quot;: &quot;behaviours&quot;,</span>
+    <span class="c1">#     &quot;timestamp&quot;: &quot;timestamp&quot;,</span>
+    <span class="c1">#     &quot;check_cf&quot;: &quot;check_cf&quot;,</span>
+    <span class="c1">#     &quot;check_certificate&quot;: &quot;check_certificate&quot;</span>
+    <span class="c1"># }</span>
+
+    <span class="n">check_resp</span> <span class="o">=</span> <span class="n">RevocationChecker</span><span class="p">()</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">revocation_checker_url</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+    <span class="n">cert_status</span> <span class="o">=</span> <span class="n">check_resp</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">cert_status</span> <span class="o">==</span> <span class="n">ERROR</span><span class="p">:</span>
+        <span class="c1"># set cert_status to UNKNOWN to continue execution</span>
+        <span class="c1"># log already done by RevocationChecker</span>
+        <span class="n">cert_status</span> <span class="o">=</span> <span class="n">UNKNOWN</span>
+    <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cert_status</span>
+
+    <span class="n">status</span> <span class="o">=</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Certificate status: </span><span class="si">{status}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">check_resp</span></div>
+
+
+<div class="viewcode-block" id="get_pin"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.get_pin">[documenti]</a><span class="k">def</span> <span class="nf">get_pin</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Gets you the `PIN` and saves it in `user_session` &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">user_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">:</span>
+        <span class="n">init_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;pin&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span>
+        <span class="n">_get_pin_popup</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">_is_session_valid</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Invalidating user_session&quot;</span><span class="p">)</span>
+        <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">_get_pin_popup</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Refreshing user_session timestamp&quot;</span><span class="p">)</span>
+        <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+    <span class="c1"># check for mishapening</span>
+    <span class="k">if</span> <span class="s2">&quot;pin&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;aborted&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_pin_popup</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Little popup to input Smart Card PIN &quot;&quot;&quot;</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;User PIN input&quot;</span><span class="p">)</span>
+    <span class="n">widget</span> <span class="o">=</span> <span class="n">Tk</span><span class="p">()</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Inserisci PIN:&quot;</span><span class="p">)</span>
+    <span class="n">pinbox</span> <span class="o">=</span> <span class="n">Entry</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">)</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">label</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span>
+    <span class="n">pinbox</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_abort</span><span class="p">():</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Get pin aborted by user&quot;</span><span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_click</span><span class="p">():</span>
+        <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;pin&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pinbox</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+    <span class="n">widget</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;&lt;Return&gt;&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">on_click</span><span class="p">())</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">protocol</span><span class="p">(</span><span class="s2">&quot;WM_DELETE_WINDOW&quot;</span><span class="p">,</span> <span class="n">on_abort</span><span class="p">)</span>
+    <span class="n">button_ok</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">on_click</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;OK&quot;</span><span class="p">)</span>
+    <span class="n">button_ok</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">pady</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">button_abort</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span>  <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">on_abort</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Annulla&quot;</span><span class="p">)</span>
+    <span class="n">button_abort</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">filler</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">filler</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+    <span class="n">widget</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Smart Card PIN&quot;</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">attributes</span><span class="p">(</span><span class="s2">&quot;-topmost&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    <span class="n">_center</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="show_warning_message"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.show_warning_message">[documenti]</a><span class="k">def</span> <span class="nf">show_warning_message</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Little popup to show warning message &quot;&quot;&quot;</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;show_warning_message&quot;</span><span class="p">)</span>
+    <span class="n">widget</span> <span class="o">=</span> <span class="n">Tk</span><span class="p">()</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">withdraw</span><span class="p">()</span>
+    <span class="n">messagebox</span><span class="o">.</span><span class="n">showwarning</span><span class="p">(</span><span class="s2">&quot;Attenzione&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">_unknown_certificate_choice</span><span class="p">(</span><span class="n">choice</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Little popup for asking the user if he wants to sign with an unknoun certificate status &quot;&quot;&quot;</span>
+
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Unknown status&quot;</span><span class="p">)</span>
+    <span class="n">widget</span> <span class="o">=</span> <span class="n">Tk</span><span class="p">()</span>
+    <span class="n">row1</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+    <span class="n">label1</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Al momento non è possibile verificare lo stato del&quot;</span><span class="p">)</span>
+    <span class="n">label2</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;certificato di firma, procedere comunque?&quot;</span><span class="p">)</span>
+    <span class="n">label3</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;(Questa scelta sarà memorizzata fino alla scadenza del PIN)&quot;</span><span class="p">)</span>
+    <span class="n">row1</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">label1</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+    <span class="n">label2</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+    <span class="n">label3</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_click_ok</span><span class="p">():</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+        <span class="n">choice</span><span class="p">[</span><span class="s2">&quot;continue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">on_click_nok</span><span class="p">():</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+        <span class="n">choice</span><span class="p">[</span><span class="s2">&quot;continue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">row2</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+    <span class="n">button_ok</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">row2</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">on_click_ok</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;OK&quot;</span><span class="p">)</span>
+    <span class="n">button_nok</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">row2</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">on_click_nok</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Annulla&quot;</span><span class="p">)</span>
+    <span class="n">row2</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+    <span class="n">button_ok</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">button_nok</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">filler</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">filler</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+    <span class="n">widget</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Warning&quot;</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">attributes</span><span class="p">(</span><span class="s2">&quot;-topmost&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    <span class="n">_center</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_center</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Center `widget` on the screen &quot;&quot;&quot;</span>
+    <span class="n">screen_width</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_screenwidth</span><span class="p">()</span>
+    <span class="n">screen_height</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_screenheight</span><span class="p">()</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">screen_width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_width</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c1"># Little higher than center</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">screen_height</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_height</span><span class="p">()</span>
+
+    <span class="n">widget</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;+{int(x)}+{int(y)}&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="download_file"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.download_file">[documenti]</a><span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="n">file_url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scarica il file dall&#39;url passato come parametro</span>
+
+<span class="sd">    :param file_url: Url dove scaricare il file</span>
+<span class="sd">    :type file_url: str</span>
+<span class="sd">    :return: Il path locale dove il file viene salvato</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># get file name with random uuid</span>
+    <span class="n">file_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+    <span class="c1"># get file content</span>
+    <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">file_url</span><span class="p">)</span>
+    <span class="n">req</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36&#39;</span><span class="p">)</span>
+
+    <span class="n">url_resp</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+    <span class="n">content_type</span> <span class="o">=</span> <span class="n">url_resp</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;content-type&#39;</span><span class="p">]</span>
+    <span class="n">guess_type</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_extension</span><span class="p">(</span><span class="n">content_type</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">url_content</span> <span class="o">=</span> <span class="n">url_resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="c1"># create file locally</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">):</span>
+        <span class="n">makedirs</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">)</span>
+
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">file_name</span><span class="p">,</span> <span class="n">guess_type</span><span class="p">]))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">_file</span><span class="p">:</span>
+        <span class="n">_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">url_content</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">file_path</span></div>
+
+
+<span class="c1">####################################################################</span>
+<span class="c1">#       MAIN                                                       #</span>
+<span class="c1">####################################################################</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;App started. Check for resume...&quot;</span><span class="p">)</span>
+    <span class="n">sys_params</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+  <span class="c1">#  sys_params = [&#39;firmajr://B4F4940C-B901-526A-0890-9ECBD6FD0EB6;aHR0cDovLzEyNy4wLjAuMTo4MDgwL0RvY3RvckZhc2VuL1NlcnZlU2lnbkNvbmZpZ3VyYXRpb24=&#39;]</span>
+    <span class="n">handle_sign</span><span class="p">(</span><span class="n">sys_params</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;closing app&quot;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Codice del modulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

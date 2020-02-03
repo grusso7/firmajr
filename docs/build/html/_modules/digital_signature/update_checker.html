@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>digital_signature.update_checker &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="Indice" href="../../genindex.html" />
+    <link rel="search" title="Cerca" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Codice sorgente per digital_signature.update_checker</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">digital_signature</span>
+<span class="kn">import</span> <span class="nn">tkinter</span> <span class="k">as</span> <span class="nn">tk</span>
+<span class="kn">import</span> <span class="nn">tkinter.ttk</span> <span class="k">as</span> <span class="nn">ttk</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">pyupdater.client</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">from</span> <span class="nn">client_config</span> <span class="kn">import</span> <span class="n">ClientConfig</span>
+<span class="kn">from</span> <span class="nn">my_logger</span> <span class="kn">import</span> <span class="n">MyLogger</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">MyLogger</span><span class="p">()</span><span class="o">.</span><span class="n">my_logger</span><span class="p">()</span>
+<span class="n">CLIENT_CONFIG</span> <span class="o">=</span> <span class="n">ClientConfig</span><span class="p">()</span>
+<span class="n">progbar</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">root</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="UpdateStatus"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.update_checker.UpdateStatus">[documenti]</a><span class="k">class</span> <span class="nc">UpdateStatus</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Enumerated data type&quot;&quot;&quot;</span>
+    <span class="c1"># pylint: disable=invalid-name</span>
+    <span class="c1"># pylint: disable=too-few-public-methods</span>
+    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">NO_AVAILABLE_UPDATES</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">UPDATE_DOWNLOAD_FAILED</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">EXTRACTING_UPDATE_AND_RESTARTING</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">UPDATE_AVAILABLE_BUT_APP_NOT_FROZEN</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">COULDNT_CHECK_FOR_UPDATES</span> <span class="o">=</span> <span class="mi">5</span></div>
+
+
+<span class="n">UPDATE_STATUS_STR</span> <span class="o">=</span> \
+    <span class="p">[</span><span class="s1">&#39;Unknown&#39;</span><span class="p">,</span> <span class="s1">&#39;No available updates were found.&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;Update download failed.&#39;</span><span class="p">,</span> <span class="s1">&#39;Extracting update and restarting.&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;Update available but application is not frozen.&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;Couldn</span><span class="se">\&#39;</span><span class="s1">t check for updates.&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="check_for_updates"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.update_checker.check_for_updates">[documenti]</a><span class="k">def</span> <span class="nf">check_for_updates</span><span class="p">(</span><span class="n">rev_checker_url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Controllo nuovi aggiornamenti.</span>
+
+<span class="sd">    :param update_checker_url: Url server degli aggiornamenti, defaults to None</span>
+<span class="sd">    :type update_checker_url: str, optional</span>
+<span class="sd">    :return: UpdateObject utilizzato per aggiornare i binari</span>
+<span class="sd">    :rtype: AppUpdate</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">CLIENT_CONFIG</span><span class="o">.</span><span class="n">PUBLIC_KEY</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">rev_checker_url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">CLIENT_CONFIG</span><span class="o">.</span><span class="n">UPDATE_URLS</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">rev_checker_url</span> <span class="o">+</span> <span class="s2">&quot;deploy/&quot;</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">CLIENT_CONFIG</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">progress_hooks</span><span class="o">=</span><span class="p">[</span><span class="n">progress</span><span class="p">])</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Actual client version: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">digital_signature</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+    <span class="n">appUpdate</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">update_check</span><span class="p">(</span><span class="n">CLIENT_CONFIG</span><span class="o">.</span><span class="n">APP_NAME</span><span class="p">,</span>
+                                    <span class="n">digital_signature</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span>
+                                    <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;stable&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">appUpdate</span></div>
+
+
+<div class="viewcode-block" id="run_updates"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.update_checker.run_updates">[documenti]</a><span class="k">def</span> <span class="nf">run_updates</span><span class="p">(</span><span class="n">app_update</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Lancia il download dell&#39;aggiornamento e al completamento estrae il file dal zip e riavvia l&#39;applicazione</span>
+
+<span class="sd">    :param app_update: UpdateObject utilizzato per aggiornare i binari</span>
+<span class="sd">    :type app_update: AppUpdate</span>
+<span class="sd">    :return: Lo stato dell&#39;aggiornamento</span>
+<span class="sd">    :rtype: UpdateStatus</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting update and restart...&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;frozen&quot;</span><span class="p">):</span>
+        <span class="n">downloaded</span> <span class="o">=</span> <span class="n">app_update</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">downloaded</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">UpdateStatus</span><span class="o">.</span><span class="n">EXTRACTING_UPDATE_AND_RESTARTING</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting update and restart...&#39;</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">app_update</span><span class="o">.</span><span class="n">extract_restart</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">UpdateStatus</span><span class="o">.</span><span class="n">UPDATE_DOWNLOAD_FAILED</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">UpdateStatus</span><span class="o">.</span><span class="n">UPDATE_AVAILABLE_BUT_APP_NOT_FROZEN</span>
+    <span class="k">return</span> <span class="n">UPDATE_STATUS_STR</span><span class="p">[</span><span class="n">status</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="progress"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.update_checker.progress">[documenti]</a><span class="k">def</span> <span class="nf">progress</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">progbar</span>
+    <span class="k">global</span> <span class="n">root</span>
+
+    <span class="k">if</span> <span class="n">progbar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Tk</span><span class="p">()</span>
+        <span class="c1"># root.geometry(&#39;250x60+100+100&#39;)</span>
+        <span class="n">root</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Aggiornamento...&#39;</span><span class="p">)</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">DoubleVar</span><span class="p">()</span>
+        <span class="n">step</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">()</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">BOTH</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">lbl</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Aggiornamento in corso, attendere prego...&quot;</span><span class="p">)</span>
+        <span class="n">lbl</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+        <span class="n">progbar</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Progressbar</span><span class="p">(</span>
+            <span class="n">frame</span><span class="p">,</span>
+            <span class="n">orient</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">HORIZONTAL</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;determinate&#39;</span><span class="p">,</span>
+            <span class="n">variable</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+        <span class="n">progbar</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Downloading udpdate&#39;</span><span class="p">)</span>
+        <span class="n">root</span><span class="o">.</span><span class="n">attributes</span><span class="p">(</span><span class="s2">&quot;-topmost&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">root</span><span class="o">.</span><span class="n">protocol</span><span class="p">(</span><span class="s2">&quot;WM_DELETE_WINDOW&quot;</span><span class="p">,</span> <span class="n">_on_closing</span><span class="p">)</span>
+        <span class="n">_center</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+        <span class="n">root</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;percent_complete&#39;</span><span class="p">]))</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Percent complete: </span><span class="si">%2d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">progbar</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="o">.</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">root</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">_center</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Center `widget` on the screen &quot;&quot;&quot;</span>
+    <span class="n">screen_width</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_screenwidth</span><span class="p">()</span>
+    <span class="n">screen_height</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_screenheight</span><span class="p">()</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">screen_width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_width</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="c1"># Little higher than center</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">screen_height</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_height</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">widget</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;+{int(x) - 100}+{int(y)}&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_on_closing</span><span class="p">():</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="UpdatePyUpdaterClientConfig"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.update_checker.UpdatePyUpdaterClientConfig">[documenti]</a><span class="k">def</span> <span class="nf">UpdatePyUpdaterClientConfig</span><span class="p">(</span><span class="n">revocation_checker_url</span><span class="p">):</span>
+    <span class="n">updateUrl</span> <span class="o">=</span> <span class="n">revocation_checker_url</span>
+    <span class="n">CLIENT_CONFIG</span><span class="o">.</span><span class="n">UPDATE_URLS</span> <span class="o">=</span> <span class="p">[</span><span class="n">updateUrl</span><span class="p">]</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Codice del modulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

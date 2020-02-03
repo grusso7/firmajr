@@ -1,0 +1,313 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>Flusso di esecuzione &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="Indice" href="genindex.html" />
+    <link rel="search" title="Cerca" href="search.html" />
+    <link rel="next" title="Firma P7M" href="firma_p7m.html" />
+    <link rel="prev" title="Per iniziare" href="getting_started.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="flusso-di-esecuzione">
+<h1>Flusso di esecuzione<a class="headerlink" href="#flusso-di-esecuzione" title="Link a questa intestazione">¶</a></h1>
+<p>In questa sezione sono presenti tutti i passaggi che fanno parte del processo di firma, dalla richiesta che parte da una web application alla
+effettiva procedura di firma, differenziando i casi di firma P7M e PDF.
+Analizzeremo soprattutto come viene utilizzata nella suite Babel.</p>
+<div class="section" id="avvio-firma-lato-web-application">
+<h2>Avvio firma lato web application<a class="headerlink" href="#avvio-firma-lato-web-application" title="Link a questa intestazione">¶</a></h2>
+<p>Per far partire la procedura di firma l’applicazione web dal quale viene effettuata la richiesta deve svolgere dei passaggi preliminari.
+In questa fase viene creato il json &lt;signConfiguration&gt; che contiene tutti i parametri e la lista dei file da firmare.
+La struttura è la seguente:</p>
+<div class="highlight-JSON notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;user_id&quot;</span><span class="p">:</span> <span class="s2">&quot;codice_fiscale&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;masterDocumentId&quot;</span><span class="p">:</span> <span class="s2">&quot;masterDocumentId&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;file_list&quot;</span><span class="p">:</span> <span class="p">[</span>
+  <span class="p">{</span>
+  <span class="nt">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;file_path&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;file_id&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;file_mime_type&quot;</span><span class="p">:</span> <span class="s2">&quot;file_mime_type&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;file_name&quot;</span><span class="p">:</span> <span class="s2">&quot;file_name&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;file_type&quot;</span><span class="p">:</span> <span class="s2">&quot;file_type (Es. DocumentoPicoNuovoPU)&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;file_data&quot;</span><span class="p">:</span> <span class="s2">&quot;{file additional data (only a bag)}&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;signed_file_type&quot;</span><span class="p">:</span> <span class="s2">&quot;p7m|pdf&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;destination&quot;</span><span class="p">:</span> <span class="s2">&quot;destination_path&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;sig_attributes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;visibility&quot;</span><span class="p">:</span> <span class="s2">&quot;visibility&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;position&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;page&quot;</span><span class="p">:</span> <span class="s2">&quot;n&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;width&quot;</span><span class="p">:</span> <span class="s2">&quot;200.0&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;60.0&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;padding_width&quot;</span><span class="p">:</span> <span class="s2">&quot;75.0&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;padding_height&quot;</span><span class="p">:</span> <span class="s2">&quot;670.0&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;signature_name&quot;</span><span class="p">:</span> <span class="s2">&quot;Signature&quot;</span>
+    <span class="p">},</span>
+    <span class="nt">&quot;p7m_sig_type&quot;</span><span class="p">:</span> <span class="s2">&quot;p7m_sig_type&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;text_template&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+  <span class="p">}],</span>
+  <span class="nt">&quot;test_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;true|false&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;update_checker_url&quot;</span><span class="p">:</span> <span class="s2">&quot;[optional]&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;revocation_checker_url&quot;</span><span class="p">:</span> <span class="s2">&quot;[optional]&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;uploader&quot;</span><span class="p">:</span> <span class="s2">&quot;http://localhost:8095/&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;azienda&quot;</span><span class="p">:</span> <span class="s2">&quot;codice_azienda&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;serverIdentifier&quot;</span><span class="p">:</span> <span class="s2">&quot;serverIdentifier&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;resultChannel&quot;</span><span class="p">:</span> <span class="s2">&quot;resultChannel&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;endSignManagerUrl&quot;</span><span class="p">:</span> <span class="s2">&quot;servlet di fine firma&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Il json viene salvato sul server redis dell’ambiente (Bologna ad esempio) ed associato ad una chiave che chiamamo token. Questa è una delle possibili
+soluzioni, come da premessa questo è il metodo usato in Babel, è possibile personalizzare questa soluzione in altri modi.
+Dopo questi passaggi viene chiamato un URL con una funzione javascript e l’applicazione web resta in attesa:</p>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">function</span> <span class="nx">downloadAndNotify</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span><span class="nx">name</span><span class="p">,</span><span class="nx">command</span><span class="p">,</span><span class="nx">token</span><span class="p">,</span><span class="nx">close</span><span class="o">=</span><span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">close</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span> <span class="o">=</span> <span class="nx">url</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">myWindow</span> <span class="o">=</span> <span class="nb">window</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span><span class="nx">name</span><span class="p">);</span>
+      <span class="nx">myWindow</span><span class="p">.</span><span class="nx">focus</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="kd">var</span> <span class="nx">cmd</span> <span class="o">=</span> <span class="nx">command</span> <span class="o">+</span> <span class="s1">&#39;&amp;params=&#39;</span><span class="o">+</span><span class="nx">token</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">e</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">IDEvent</span><span class="p">(</span><span class="s2">&quot;cmd&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">RD3_Glb</span><span class="p">.</span><span class="nx">EVENT_ACTIVE</span><span class="p">,</span> <span class="nx">cmd</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>L’URL chiamato è un protocollo che è stato inserito durante l’installazione di FirmaJR ed ha la seguente struttura:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>firmajr://&lt;token&gt;;&lt;url_redis_server&gt;
+</pre></div>
+</div>
+<p>Il &lt;token&gt; è la chiave per identificare e recuperare sul server di redis il json, mentre &lt;url_redis_server&gt; è l’url codificato in base64 del server.</p>
+<p>L’apertura di questo URL lancierà applicazione FirmaJR sul PC dell’utente, con alcune differenze se viene aperto da Chrome o Firefox. Su Chrome
+viene visualizzato un popoup con la richiesta di confermare o annullare l’apertura dell’applicazione mentre su Firefox viene mostrata una finestra
+la quale anch’essa chiede di confermare l’apertura dell’applicazione però con la possibilità di salvare la scelta così che nelle successive richieste
+viene eseguita direttamente.</p>
+<p>Da questo momento in poi l’applicazione web resta in attesa finché non viene conclusa la firma sull’applicazione desktop oppure scade il timeout.</p>
+</div>
+<div class="section" id="operazioni-preliminari">
+<h2>Operazioni preliminari<a class="headerlink" href="#operazioni-preliminari" title="Link a questa intestazione">¶</a></h2>
+<p>L’applicazione è in esecuzione, viene letto l’URL aperto dal browser e viene passato al metodo <strong>handle_sign(start_params)</strong> che gestisce le fasi
+principali del processo di esecuzione di FirmaJR.
+Prima della firma dei file vengono effettuate delle operazioni preliminari:</p>
+<ol class="arabic simple">
+<li><p>Parsing dell’URL e recupero json con i parametri per la firma</p></li>
+<li><p>Controllo degli aggiornamenti</p></li>
+<li><p>Controllo del certificato</p></li>
+</ol>
+<div class="section" id="parsing-url-e-recupero-parametri">
+<h3>Parsing URL e recupero parametri<a class="headerlink" href="#parsing-url-e-recupero-parametri" title="Link a questa intestazione">¶</a></h3>
+<p>Nella prima fase sono previsti due casi:</p>
+<ol class="arabic simple">
+<li><p>Nel primo caso viene fatto il parsing dell’URL recuperando i due parametri attesi ovvero il token per identificare univocamente
+il json dei parametri e l’url del server di redis dove viene fatta una chiamata HTTP passando come parametro il token.
+La risposta della chiamata sarà il json dei parametri visto precedentemente.</p></li>
+<li><p>Il secondo caso invece si presenta quando l’applicazione si avvia in seguito ad un aggiornamento. I parametri non saranno presenti
+più nell’URL ma sono stati salvati sul file system, vedremo la procedura in seguito, quindi vengono recuperati nel metodo <strong>get_sign_resume()</strong>.</p></li>
+</ol>
+</div>
+<div class="section" id="controllo-degli-aggiornamenti">
+<h3>Controllo degli aggiornamenti<a class="headerlink" href="#controllo-degli-aggiornamenti" title="Link a questa intestazione">¶</a></h3>
+<p>Il controllo degli aggiornamenti in FirmaJR viene fatto ogni volta viene eseguita un’operazione di firma. Inizia la fase due.
+Il sistema utilizzato per gli aggiornamenti è fornito dalla libreria PyUpdater. Il progetto viene configurato attraverso uno script
+(per i dettagli consulatare la documentazione della libreria), il quale genera un file di configurazione <em>client_config.py</em>. In questo file vengono
+salvati i parametri necessari a gestire l’operazione, come la public key che serve a decriptare il file zip che contiene l’aggiornamento, il nome
+dell’applicazione e l’url del server degli aggiornamenti.
+Url del server è personalizzabile, infatti nel json scaricato nella fase 1, fra i vari parametri è possibile fornire un url diverso da quello
+preconfigurato per il controllo e lo scaricamento degli aggiornamenti. Questo parametro viene passato al metodo
+<strong>updates_manager(*parameter_to_save, update_checker_url*)</strong> insieme all’URL aperto dal browser.
+Il metodo gestisce tutta la procedura; effettua il controllo della presenza di nuovi aggiornamenti, se presenti salva i parametri necessari
+al recupero dell’operazione di firma in quanto per aggiornarsi è necessario che l’applicazione venga riavviata, infine avvia l’aggiornamento.</p>
+<ul class="simple">
+<li><p>Il controllo degli aggiornamenti viene effettuato dal metodo <strong>check_for_updates(*update_checker_url*)</strong> al quale viene passato
+l’url del server dove fare il controllo. Tale parametro come abbiamo visto è opzionale, se non viene passato viene utilizzato il default presente
+nel file di configurazione client_config.</p></li>
+<li><p>Se viene trovato un nuovo aggiornamento, l’URL di apertura dell’applicazione completo (<em>firmajr://&lt;token&gt;;&lt;url_encoded&gt;</em>) viene salvato sul
+file system nel file <em>sign_status.dat</em> nella directory <em>uploads</em> della home di FirmaJR. Viene salvato in questa cartella per comodità in quanto
+viene svuotata alla fine di ogni firma.
+Infine il metodo <strong>run_updates(app_update)</strong> effettua il download e l’estrazione dell’aggiornamento e riavvia l’applicazione.</p></li>
+<li><p>Dopo il riavvio vengono eseguiti gli stessi passi, se non vengono trovati nuovi aggiornamenti l’esecuzione prosegue allo step successivo.</p></li>
+</ul>
+</div>
+<div class="section" id="controllo-del-certificato">
+<h3>Controllo del certificato<a class="headerlink" href="#controllo-del-certificato" title="Link a questa intestazione">¶</a></h3>
+<p>Nella terza fase del ciclo di esecuzione inizia la preparazione per la firma dei file gestito nel metodo <strong>sign(json_parsed)</strong>.
+Prima di proseguire vengono effettuati una serie di controlli per la presenza dei parametri nel json passato come parametro che ripetiamo
+contiene le informazioni necessarie alla firma e i file da firmare.
+Anche in questa fase ci sono alcuni step fondamentali che analizziamo.</p>
+<ol class="arabic">
+<li><p>Il primo step di questa fase, oltre al reperimento di alcuni parametri dal json della richiesta per salvarli in variabili, è <em>aprire la sessione
+con la smartcard</em> che viene fatto nel metodo <strong>fetch_smart_card_sessions()</strong> nel file <em>signature_util.py</em>. In questa funzione vengono caricati i
+driver di bit4id presenti nella cartella driver della home dell’applicazione e viene stabilita la comunicazione con la smartcard.
+Viene poi richiesto il pin nel metodo <strong>get_pin(user_id)</strong> dove user_id è il codice fiscale dell’utente preso dai parametri del json della richiesta.
+Il pin viene memorizzato nella variabile <em>user_session</em> e utilizzato per effettuare il login alla sessione della smartcard.
+Se il pin non è corretto il login fallisce e viene mostrato all’utente il messaggio di pin errato. È possibile riprovare o annullare.
+Se il pin viene sbagliato 3 volte la smartcard si blocca.</p></li>
+<li><p>Effettuato correttamente il login, viene preso dalla smartcard il certificato e salvato in una variabile attraverso il metodo
+<strong>get_certificate_value(session, certificate)</strong> presente nella classe DigiSignLib nel file <em>digiSign_lib.py</em>.</p></li>
+<li><p>Caricato il certificato, viene fatto il controllo dello stato di revoca e validità. La procedura è gestita dal metodo
+<strong>get_certificate_status(revocation_checker_url, user_id, certificate_value, params)</strong> che effettua una chiamata al <em>revocation checker server</em>
+utilizzando l’url preso dai parametri. La risposta del server ha la seguente struttura:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;behaviours&quot;</span><span class="p">:</span> <span class="s2">&quot;behaviours&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;timestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;check_cf&quot;</span><span class="p">:</span> <span class="s2">&quot;check_cf&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;check_certificate&quot;</span><span class="p">:</span> <span class="s2">&quot;check_certificate&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Con i risultati, in ordine:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>stato di validità del certificato, scaduto</p></li>
+<li><p>proprietà «behaviours» che contiene l’informazione di come l’applicazione deve comportarsi nei casi in cui il certificato non è regolare</p></li>
+<li><p>timestamp che verrà utilizzato come data di firma</p></li>
+<li><p>controllo del codice fiscale dell’utente loggato con quello del certificato</p></li>
+<li><p>controllo se il certificato è stato revocato</p></li>
+</ul>
+</div></blockquote>
+<p>Se il certificato è stato revocato la procedura si interrompe mostrando un messaggio all’utente.
+Se lo stato del certificato è non attendibile, caso in cui il certificato è valido ma non è garantito da una Autorità di Certificazione
+inclusa nell’elenco Pubblico dei Certificatori viene fatto un controllo sulla proprietà <em>behaviours</em> per decidere se mostrare un messaggio e
+far scegliere all’utente se continuare oppure interrompere l’operazione di firma e chiudere l’applicazione.
+Se il certificato è valido e tutti i controlli sono superati si passa alla firma effettiva dei file.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="processo-di-firma-dei-file">
+<h2>Processo di firma dei file<a class="headerlink" href="#processo-di-firma-dei-file" title="Link a questa intestazione">¶</a></h2>
+<p>La firma digitale avviene all’interno di un loop che cicla sulla lista dei file passati nel json dei parametri.
+Per ognuno vengono prese le proprietà dal json per inizializzare: le variabili, l’oggetto che conterrà il risultato e il path del file.
+Se quest’ultimo è un URL il file viene scaricato con una chiamata http ad una servlet apposita e salvato nella cartella <em>uploads</em> nella home
+di FirmaJR memorizzando il path locale in una variabile.</p>
+<p>A questo punto, in base alla proprietà <em>signature_type</em> il file viene firmato in <strong>P7M</strong> oppure in <strong>PDF</strong> e la procedura è gestita rispettivamente
+dai metodi <strong>sign_p7m(*args*)</strong> e <strong>sign_pdf(*args*)</strong>.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="firma_p7m.html">Firma P7M</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="firma_pdf.html">Firma PDF</a></li>
+</ul>
+</div>
+<p>Entrambi i metodi restituiscono il path del file firmato che verrà aggiunto all’oggetto contenitore del risultato che a sua volta viene aggiunto
+alla lista dei file firmati <em>signed_files_list</em> che è il dato che viene restituito dalla funzione insieme allo status.
+Viene infine costruito il json che verrà inviato tramite una chiamata Http alla servlet di fine firma e l’applicazione terminerà l’esecuzione.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Flusso di esecuzione</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#avvio-firma-lato-web-application">Avvio firma lato web application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#operazioni-preliminari">Operazioni preliminari</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parsing-url-e-recupero-parametri">Parsing URL e recupero parametri</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#controllo-degli-aggiornamenti">Controllo degli aggiornamenti</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#controllo-del-certificato">Controllo del certificato</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#processo-di-firma-dei-file">Processo di firma dei file</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="firma_p7m.html">Firma P7M</a></li>
+<li class="toctree-l3"><a class="reference internal" href="firma_pdf.html">Firma PDF</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="getting_started.html" title="capitolo precedente">Per iniziare</a></li>
+      <li>Next: <a href="firma_p7m.html" title="capitolo successivo">Firma P7M</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/flusso.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

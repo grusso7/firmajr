@@ -1,0 +1,1130 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>Documentazione API &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/translations.js"></script>
+    <link rel="index" title="Indice" href="genindex.html" />
+    <link rel="search" title="Cerca" href="search.html" />
+    <link rel="prev" title="Firma PDF" href="firma_pdf.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="documentazione-api">
+<h1>Documentazione API<a class="headerlink" href="#documentazione-api" title="Link a questa intestazione">¶</a></h1>
+<div class="section" id="module-digital_signature.client_config">
+<span id="digital-signature-client-config"></span><h2>digital_signature.client_config<a class="headerlink" href="#module-digital_signature.client_config" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.client_config.ClientConfig">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.client_config.</code><code class="sig-name descname">ClientConfig</code><a class="reference internal" href="_modules/digital_signature/client_config.html#ClientConfig"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.client_config.ClientConfig" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="attribute">
+<dt id="digital_signature.client_config.ClientConfig.APP_NAME">
+<code class="sig-name descname">APP_NAME</code><em class="property"> = 'DigitalSignature'</em><a class="headerlink" href="#digital_signature.client_config.ClientConfig.APP_NAME" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.client_config.ClientConfig.COMPANY_NAME">
+<code class="sig-name descname">COMPANY_NAME</code><em class="property"> = 'Next'</em><a class="headerlink" href="#digital_signature.client_config.ClientConfig.COMPANY_NAME" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.client_config.ClientConfig.HTTP_TIMEOUT">
+<code class="sig-name descname">HTTP_TIMEOUT</code><em class="property"> = 30</em><a class="headerlink" href="#digital_signature.client_config.ClientConfig.HTTP_TIMEOUT" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.client_config.ClientConfig.MAX_DOWNLOAD_RETRIES">
+<code class="sig-name descname">MAX_DOWNLOAD_RETRIES</code><em class="property"> = 3</em><a class="headerlink" href="#digital_signature.client_config.ClientConfig.MAX_DOWNLOAD_RETRIES" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.client_config.ClientConfig.PUBLIC_KEY">
+<code class="sig-name descname">PUBLIC_KEY</code><em class="property"> = '5I/Y7+qrz71l8xrk9vKbti0RUPHObOLIL36L4R4V/DU'</em><a class="headerlink" href="#digital_signature.client_config.ClientConfig.PUBLIC_KEY" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.client_config.ClientConfig.UPDATE_URLS">
+<code class="sig-name descname">UPDATE_URLS</code><em class="property"> = ['http://localhost:8091/deploy/']</em><a class="headerlink" href="#digital_signature.client_config.ClientConfig.UPDATE_URLS" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.digiSign_lib">
+<span id="digital-signature-digisign-lib"></span><h2>digital_signature.digiSign_lib<a class="headerlink" href="#module-digital_signature.digiSign_lib" title="Link a questa intestazione">¶</a></h2>
+<dl class="exception">
+<dt id="digital_signature.digiSign_lib.CertificateOwnerException">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.digiSign_lib.</code><code class="sig-name descname">CertificateOwnerException</code><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#CertificateOwnerException"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.CertificateOwnerException" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised if user_cf is not equal to smart card cf</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="digital_signature.digiSign_lib.CertificateValidityError">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.digiSign_lib.</code><code class="sig-name descname">CertificateValidityError</code><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#CertificateValidityError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.CertificateValidityError" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised for validity problems on the certificate</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="digital_signature.digiSign_lib.DigiSignLib">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.digiSign_lib.</code><code class="sig-name descname">DigiSignLib</code><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.check_certificate_time_validity">
+<em class="property">static </em><code class="sig-name descname">check_certificate_time_validity</code><span class="sig-paren">(</span><em class="sig-param">status</em>, <em class="sig-param">block_if_expired</em>, <em class="sig-param">warn_if_expired</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.check_certificate_time_validity"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.check_certificate_time_validity" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.get_certificate">
+<em class="property">static </em><code class="sig-name descname">get_certificate</code><span class="sig-paren">(</span><em class="sig-param">session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.get_certificate"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.get_certificate" title="Link a questa definizione">¶</a></dt>
+<dd><p>Fetch certificate from <cite>session</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.get_certificate_value">
+<em class="property">static </em><code class="sig-name descname">get_certificate_value</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">certificate</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.get_certificate_value"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.get_certificate_value" title="Link a questa definizione">¶</a></dt>
+<dd><p>Get certificate value from <cite>certificate</cite> from <cite>session</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.get_file_content">
+<em class="property">static </em><code class="sig-name descname">get_file_content</code><span class="sig-paren">(</span><em class="sig-param">file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.get_file_content"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.get_file_content" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return <cite>file_path</cite> content in binary form</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.get_signed_files_path">
+<em class="property">static </em><code class="sig-name descname">get_signed_files_path</code><span class="sig-paren">(</span><em class="sig-param">file_path</em>, <em class="sig-param">sig_type</em>, <em class="sig-param">p7m_sig_type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.get_signed_files_path"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.get_signed_files_path" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.get_smart_cards_sessions">
+<em class="property">static </em><code class="sig-name descname">get_smart_cards_sessions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.get_smart_cards_sessions"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.get_smart_cards_sessions" title="Link a questa definizione">¶</a></dt>
+<dd><p>Check for connected smart card</p>
+<dl class="field-list simple">
+<dt class="field-odd">Ritorna</dt>
+<dd class="field-odd"><p>a session list of connected smart cards</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.save_file_content">
+<em class="property">static </em><code class="sig-name descname">save_file_content</code><span class="sig-paren">(</span><em class="sig-param">file_path</em>, <em class="sig-param">content</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.save_file_content"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.save_file_content" title="Link a questa definizione">¶</a></dt>
+<dd><p>Save content to <cite>file_path</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.session_close">
+<em class="property">static </em><code class="sig-name descname">session_close</code><span class="sig-paren">(</span><em class="sig-param">session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.session_close"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.session_close" title="Link a questa definizione">¶</a></dt>
+<dd><p>Close smart card <cite>session</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.session_login">
+<em class="property">static </em><code class="sig-name descname">session_login</code><span class="sig-paren">(</span><em class="sig-param">sessions</em>, <em class="sig-param">pin</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.session_login"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.session_login" title="Link a questa definizione">¶</a></dt>
+<dd><p>Attempt to login on connected smart cards</p>
+<dl class="simple">
+<dt>Param:</dt><dd><p>sessions: connected smart card slots
+pin: user pin</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Ritorna</dt>
+<dd class="field-odd"><p>logged in session</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.session_logout">
+<em class="property">static </em><code class="sig-name descname">session_logout</code><span class="sig-paren">(</span><em class="sig-param">session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.session_logout"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.session_logout" title="Link a questa definizione">¶</a></dt>
+<dd><p>User logout from session</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.sign_p7m">
+<em class="property">static </em><code class="sig-name descname">sign_p7m</code><span class="sig-paren">(</span><em class="sig-param">file_path</em>, <em class="sig-param">open_session</em>, <em class="sig-param">user_cf</em>, <em class="sig-param">sig_attrs</em>, <em class="sig-param">timestamp</em>, <em class="sig-param">check_cf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.sign_p7m"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.sign_p7m" title="Link a questa definizione">¶</a></dt>
+<dd><p>Metodo per la gestione della firma P7M</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<em>str</em>) – Path del file da firmare</p></li>
+<li><p><strong>open_session</strong> (<em>Object</em>) – La sessione aperta della smartcard</p></li>
+<li><p><strong>user_cf</strong> (<em>str</em>) – Codice fiscale dell’utente</p></li>
+<li><p><strong>sig_attrs</strong> (<em>Obj</em>) – Parametri della firma</p></li>
+<li><p><strong>timestamp</strong> (<em>timestamp</em>) – Timestamp dell’ora di firma</p></li>
+<li><p><strong>check_cf</strong> (<em>bool</em>) – Parametro per fare o no il controllo del codice fiscale</p></li>
+</ul>
+</dd>
+<dt class="field-even">Solleva</dt>
+<dd class="field-even"><p><a class="reference internal" href="#digital_signature.digiSign_lib.P7mCreationError" title="digital_signature.digiSign_lib.P7mCreationError"><strong>P7mCreationError</strong></a> – Errore nella creazione del P7M</p>
+</dd>
+<dt class="field-odd">Ritorna</dt>
+<dd class="field-odd"><p>Il path del file firmato in P7M</p>
+</dd>
+<dt class="field-even">Tipo di ritorno</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.sign_pdf">
+<em class="property">static </em><code class="sig-name descname">sign_pdf</code><span class="sig-paren">(</span><em class="sig-param">file_path</em>, <em class="sig-param">open_session</em>, <em class="sig-param">certificate</em>, <em class="sig-param">certificate_value</em>, <em class="sig-param">user_cf</em>, <em class="sig-param">sig_attributes</em>, <em class="sig-param">timestamp</em>, <em class="sig-param">check_cf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.sign_pdf"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.sign_pdf" title="Link a questa definizione">¶</a></dt>
+<dd><p>Metodo per la gestione della firma del file PDF</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<em>str</em>) – Il path del file da firmare</p></li>
+<li><p><strong>open_session</strong> (<em>Object</em>) – La sessione aperta della smartcard</p></li>
+<li><p><strong>certificate</strong> (<em>Obj</em>) – Il certificato della smartcard</p></li>
+<li><p><strong>certificate_value</strong> (<em>bytes</em>) – Il valore del certificato</p></li>
+<li><p><strong>user_cf</strong> (<em>str</em>) – Il codice fiscale dell’utente</p></li>
+<li><p><strong>sig_attributes</strong> (<em>Obj</em>) – I parametri della firma</p></li>
+<li><p><strong>timestamp</strong> (<em>timestamp</em>) – Timestamp dell’ora di firma</p></li>
+<li><p><strong>check_cf</strong> (<em>bool</em>) – Parametro per fare o no il controllo del codice fiscale</p></li>
+</ul>
+</dd>
+<dt class="field-even">Solleva</dt>
+<dd class="field-even"><p><a class="reference internal" href="#digital_signature.digiSign_lib.PdfVerificationError" title="digital_signature.digiSign_lib.PdfVerificationError"><strong>PdfVerificationError</strong></a> – Errore nella verifica del file firmato</p>
+</dd>
+<dt class="field-odd">Ritorna</dt>
+<dd class="field-odd"><p>Il path del file firmato in PDF</p>
+</dd>
+<dt class="field-even">Tipo di ritorno</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="digital_signature.digiSign_lib.P7mCreationError">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.digiSign_lib.</code><code class="sig-name descname">P7mCreationError</code><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#P7mCreationError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.P7mCreationError" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised when failing to create p7m</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="digital_signature.digiSign_lib.PdfVerificationError">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.digiSign_lib.</code><code class="sig-name descname">PdfVerificationError</code><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#PdfVerificationError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.PdfVerificationError" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised when failing to create p7m</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.digiSign_server">
+<span id="digital-signature-digisign-server"></span><h2>digital_signature.digiSign_server<a class="headerlink" href="#module-digital_signature.digiSign_server" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.digiSign_server.SignStatus">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">SignStatus</code><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#SignStatus"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.SignStatus" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+</div></blockquote>
+<p>An enumeration.</p>
+<dl class="attribute">
+<dt id="digital_signature.digiSign_server.SignStatus.ABORTED">
+<code class="sig-name descname">ABORTED</code><em class="property"> = 'aborted'</em><a class="headerlink" href="#digital_signature.digiSign_server.SignStatus.ABORTED" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.digiSign_server.SignStatus.ERROR">
+<code class="sig-name descname">ERROR</code><em class="property"> = 'error'</em><a class="headerlink" href="#digital_signature.digiSign_server.SignStatus.ERROR" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.digiSign_server.SignStatus.PARTIALLY_SIGNED">
+<code class="sig-name descname">PARTIALLY_SIGNED</code><em class="property"> = 'partially_signed'</em><a class="headerlink" href="#digital_signature.digiSign_server.SignStatus.PARTIALLY_SIGNED" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.digiSign_server.SignStatus.SIGNED">
+<code class="sig-name descname">SIGNED</code><em class="property"> = 'signed'</em><a class="headerlink" href="#digital_signature.digiSign_server.SignStatus.SIGNED" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.allowed_signature">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">allowed_signature</code><span class="sig-paren">(</span><em class="sig-param">signature_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#allowed_signature"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.allowed_signature" title="Link a questa definizione">¶</a></dt>
+<dd><p>Returns if <cite>signature_type</cite> is allowed</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.clear_session">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">clear_session</code><span class="sig-paren">(</span><em class="sig-param">user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#clear_session"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.clear_session" title="Link a questa definizione">¶</a></dt>
+<dd><p>Clears <cite>user_session</cite> associated with <cite>user_id</cite></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.download_file">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">download_file</code><span class="sig-paren">(</span><em class="sig-param">file_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#download_file"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.download_file" title="Link a questa definizione">¶</a></dt>
+<dd><p>Scarica il file dall’url passato come parametro</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><p><strong>file_url</strong> (<em>str</em>) – Url dove scaricare il file</p>
+</dd>
+<dt class="field-even">Ritorna</dt>
+<dd class="field-even"><p>Il path locale dove il file viene salvato</p>
+</dd>
+<dt class="field-odd">Tipo di ritorno</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.error_response">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">error_response</code><span class="sig-paren">(</span><em class="sig-param">sign_status</em>, <em class="sig-param">error_message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#error_response"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.error_response" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.get_certificate_status">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">get_certificate_status</code><span class="sig-paren">(</span><em class="sig-param">revocation_checker_url</em>, <em class="sig-param">user_id</em>, <em class="sig-param">certificate_value</em>, <em class="sig-param">params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#get_certificate_status"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.get_certificate_status" title="Link a questa definizione">¶</a></dt>
+<dd><p>Controllo la validità e lo stato di revoca del certificato e salva il risultato nella sessione dell’utente</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>revocation_checker_url</strong> (<em>str</em>) – Url del revocation checker server che effettua il controllo</p></li>
+<li><p><strong>user_id</strong> (<em>str</em>) – Il codice fiscale dell’utente</p></li>
+<li><p><strong>certificate_value</strong> (<em>bytes</em>) – Il certificato da controllare</p></li>
+<li><p><strong>params</strong> (<em>str</em>) – Parametri personalizzabili, ed esempio nel sistema babel contengono il codice azienda</p></li>
+</ul>
+</dd>
+<dt class="field-even">Ritorna</dt>
+<dd class="field-even"><p>Il json con il risultato del controllo contenente: status, behaviours, timestamp, check codice fiscale</p>
+</dd>
+<dt class="field-odd">Tipo di ritorno</dt>
+<dd class="field-odd"><p>json</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.get_pin">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">get_pin</code><span class="sig-paren">(</span><em class="sig-param">user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#get_pin"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.get_pin" title="Link a questa definizione">¶</a></dt>
+<dd><p>Gets you the <cite>PIN</cite> and saves it in <cite>user_session</cite></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.get_sign_resume">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">get_sign_resume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#get_sign_resume"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.get_sign_resume" title="Link a questa definizione">¶</a></dt>
+<dd><p>Recupera i parametri per riprendere il processo di firma in seguito ad un aggiornamento</p>
+<dl class="field-list simple">
+<dt class="field-odd">Ritorna</dt>
+<dd class="field-odd"><p>L’URL con i parametri iniziali</p>
+</dd>
+<dt class="field-even">Tipo di ritorno</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.handle_sign">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">handle_sign</code><span class="sig-paren">(</span><em class="sig-param">start_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#handle_sign"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.handle_sign" title="Link a questa definizione">¶</a></dt>
+<dd><p>Metodo principale. Effettua il parsing dei parametri contenuti nell’URL lanciato dalla web application,
+recupero dei parametri, controllo degli aggiornamenti e avvio processo di firma.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><p><strong>start_params</strong> (<em>str</em>) – È l’URL completo aperto nel browser</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.init_session">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">init_session</code><span class="sig-paren">(</span><em class="sig-param">user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#init_session"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.init_session" title="Link a questa definizione">¶</a></dt>
+<dd><p>Initializes <cite>user_session</cite> associated with <cite>user_id</cite></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.response_maker">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">response_maker</code><span class="sig-paren">(</span><em class="sig-param">url_servlet_end_sign</em>, <em class="sig-param">_result_channel</em>, <em class="sig-param">result</em>, <em class="sig-param">master_document_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#response_maker"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.response_maker" title="Link a questa definizione">¶</a></dt>
+<dd><p>Costruisce il json con il risultato di firma e chiama la servlet di fine firma</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url_servlet_end_sign</strong> (<em>str</em>) – Url della servlet di fine firma</p></li>
+<li><p><strong>_result_channel</strong> (<em>str</em>) – Identificatore del risultato della firma su redis</p></li>
+<li><p><strong>result</strong> (<em>List</em>) – La lista del risultato di firma, contenente lo status e la lista dei file firmati</p></li>
+<li><p><strong>master_document_id</strong> (<em>str</em>) – Id del documento master, utilizzato dal sistema Babel nel caso del firmone</p></li>
+</ul>
+</dd>
+<dt class="field-even">Ritorna</dt>
+<dd class="field-even"><p>La risposta http della servlet</p>
+</dd>
+<dt class="field-odd">Tipo di ritorno</dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.save_sign_status">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">save_sign_status</code><span class="sig-paren">(</span><em class="sig-param">params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#save_sign_status"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.save_sign_status" title="Link a questa definizione">¶</a></dt>
+<dd><p>Salva i parametri sul file system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><p><strong>params</strong> (<em>str</em>) – Parametri iniziali passati all’avvio dell’applicazione nell’URL</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.show_warning_message">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">show_warning_message</code><span class="sig-paren">(</span><em class="sig-param">message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#show_warning_message"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.show_warning_message" title="Link a questa definizione">¶</a></dt>
+<dd><p>Little popup to show warning message</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.sign">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">sign</code><span class="sig-paren">(</span><em class="sig-param">json_parsed</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#sign"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.sign" title="Link a questa definizione">¶</a></dt>
+<dd><p>Metodo principale per la gestione del processo di firma dei file passati come parametro</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><p><strong>json_parsed</strong> (<em>str</em>) – Il json contenente i parametri e i file da firmare</p>
+</dd>
+<dt class="field-even">Ritorna</dt>
+<dd class="field-even"><p>Lista contenente lo status della firma e la lista dei file firmati oppure un messaggio in caso di errore</p>
+</dd>
+<dt class="field-odd">Tipo di ritorno</dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#digital_signature.digiSign_server.SignStatus" title="digital_signature.digiSign_server.SignStatus">SignStatus</a>, json]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.updates_manager">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">updates_manager</code><span class="sig-paren">(</span><em class="sig-param">parameter_to_save</em>, <em class="sig-param">update_checker_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#updates_manager"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.updates_manager" title="Link a questa definizione">¶</a></dt>
+<dd><p>Gestione degli aggiornamenti. Effettua il controllo di nuovi aggiornamenti ed in tal caso salva i parametri della firma e
+avvia l’aggiornamento dell’applicazione.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter_to_save</strong> (<em>str</em>) – I parameteri da salvare. È l’URL completo con il quale viene lanciata l’applicazione.</p></li>
+<li><p><strong>update_checker_url</strong> (<em>str</em>) – L’url del server dove sono presenti le nuove versioni dell’applicazione</p></li>
+</ul>
+</dd>
+<dt class="field-even">Ritorna</dt>
+<dd class="field-even"><p>Lo status dell’aggiornamento</p>
+</dd>
+<dt class="field-odd">Tipo di ritorno</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#digital_signature.update_checker.UpdateStatus" title="digital_signature.update_checker.UpdateStatus">UpdateStatus</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.my_config_loader">
+<span id="digital-signature-my-config-loader"></span><h2>digital_signature.my_config_loader<a class="headerlink" href="#module-digital_signature.my_config_loader" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.my_config_loader.MyConfigLoader">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.my_config_loader.</code><code class="sig-name descname">MyConfigLoader</code><a class="reference internal" href="_modules/digital_signature/my_config_loader.html#MyConfigLoader"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.my_config_loader.MyConfigLoader" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.my_config_loader.MyConfigLoader.get_logger_config">
+<code class="sig-name descname">get_logger_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/my_config_loader.html#MyConfigLoader.get_logger_config"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.my_config_loader.MyConfigLoader.get_logger_config" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.my_config_loader.MyConfigLoader.get_pdf_config">
+<code class="sig-name descname">get_pdf_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/my_config_loader.html#MyConfigLoader.get_pdf_config"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.my_config_loader.MyConfigLoader.get_pdf_config" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.my_config_loader.MyConfigLoader.get_rev_checker_apis">
+<code class="sig-name descname">get_rev_checker_apis</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/my_config_loader.html#MyConfigLoader.get_rev_checker_apis"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.my_config_loader.MyConfigLoader.get_rev_checker_apis" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.my_config_loader.MyConfigLoader.get_server_config">
+<code class="sig-name descname">get_server_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/my_config_loader.html#MyConfigLoader.get_server_config"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.my_config_loader.MyConfigLoader.get_server_config" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.my_logger">
+<span id="digital-signature-my-logger"></span><h2>digital_signature.my_logger<a class="headerlink" href="#module-digital_signature.my_logger" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.my_logger.MyLogger">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.my_logger.</code><code class="sig-name descname">MyLogger</code><a class="reference internal" href="_modules/digital_signature/my_logger.html#MyLogger"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.my_logger.MyLogger" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.my_logger.MyLogger.my_logger">
+<code class="sig-name descname">my_logger</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/my_logger.html#MyLogger.my_logger"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.my_logger.MyLogger.my_logger" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.p7m_encoder">
+<span id="digital-signature-p7m-encoder"></span><h2>digital_signature.p7m_encoder<a class="headerlink" href="#module-digital_signature.p7m_encoder" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.p7m_encoder.P7mAttributes">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.p7m_encoder.</code><code class="sig-name descname">P7mAttributes</code><span class="sig-paren">(</span><em class="sig-param">algos</em>, <em class="sig-param">certificates</em>, <em class="sig-param">signer_infos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/p7m_encoder.html#P7mAttributes"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.p7m_encoder.P7mAttributes" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="class">
+<dt id="digital_signature.p7m_encoder.P7mEncoder">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.p7m_encoder.</code><code class="sig-name descname">P7mEncoder</code><a class="reference internal" href="_modules/digital_signature/p7m_encoder.html#P7mEncoder"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.p7m_encoder.P7mEncoder" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.p7m_encoder.P7mEncoder.bytes_to_sign">
+<em class="property">static </em><code class="sig-name descname">bytes_to_sign</code><span class="sig-paren">(</span><em class="sig-param">content_hash</em>, <em class="sig-param">certificate_hash</em>, <em class="sig-param">timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/p7m_encoder.html#P7mEncoder.bytes_to_sign"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.p7m_encoder.P7mEncoder.bytes_to_sign" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return the p7m part that needs to be signed</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>content_hash: content digest
+certificate_hash: certificate digest</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.p7m_encoder.P7mEncoder.encode_signed_attributes">
+<em class="property">static </em><code class="sig-name descname">encode_signed_attributes</code><span class="sig-paren">(</span><em class="sig-param">content_hash</em>, <em class="sig-param">certificate_hash</em>, <em class="sig-param">timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/p7m_encoder.html#P7mEncoder.encode_signed_attributes"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.p7m_encoder.P7mEncoder.encode_signed_attributes" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return a well formed signed attributes p7m field</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>content_hash: content digest
+certificate_hash: certificate digest</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.p7m_encoder.P7mEncoder.encode_signer_info">
+<em class="property">static </em><code class="sig-name descname">encode_signer_info</code><span class="sig-paren">(</span><em class="sig-param">issuer</em>, <em class="sig-param">serial_number</em>, <em class="sig-param">signed_attributes</em>, <em class="sig-param">signed_bytes</em>, <em class="sig-param">existing_sig_infos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/p7m_encoder.html#P7mEncoder.encode_signer_info"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.p7m_encoder.P7mEncoder.encode_signer_info" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return a well formed signer info p7m field</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>issuer: smart card certificate issuer (bytes)
+serial_number: smart card serial number (int)
+signed_attributes: signed attributes p7m field
+signed_bytes: signature (bytes)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.p7m_encoder.P7mEncoder.make_a_p7m">
+<em class="property">static </em><code class="sig-name descname">make_a_p7m</code><span class="sig-paren">(</span><em class="sig-param">content</em>, <em class="sig-param">certificate_value</em>, <em class="sig-param">signer_info</em>, <em class="sig-param">p7m_sig_attrs: digital_signature.p7m_encoder.P7mAttributes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/p7m_encoder.html#P7mEncoder.make_a_p7m"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.p7m_encoder.P7mEncoder.make_a_p7m" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return a well formed complete p7m</p>
+<dl class="simple">
+<dt>Param:</dt><dd><p>content: file content to sign
+certificate_value: value field of the smart card certificate
+signer_info: signer info in asn1 form</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.pdf_builder">
+<span id="digital-signature-pdf-builder"></span><h2>digital_signature.pdf_builder<a class="headerlink" href="#module-digital_signature.pdf_builder" title="Link a questa intestazione">¶</a></h2>
+<dl class="exception">
+<dt id="digital_signature.pdf_builder.PDFCreationError">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.pdf_builder.</code><code class="sig-name descname">PDFCreationError</code><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#PDFCreationError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.PDFCreationError" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised when failing to create pdf</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="digital_signature.pdf_builder.PDFSigningError">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.pdf_builder.</code><code class="sig-name descname">PDFSigningError</code><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#PDFSigningError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.PDFSigningError" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised when failing to sign pdf</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="digital_signature.pdf_builder.Signature">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.pdf_builder.</code><code class="sig-name descname">Signature</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#Signature"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.Signature" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="class">
+<dt id="digital_signature.pdf_builder.SignedData">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.pdf_builder.</code><code class="sig-name descname">SignedData</code><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.aligned">
+<code class="sig-name descname">aligned</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.aligned"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.aligned" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.get_acrofields">
+<code class="sig-name descname">get_acrofields</code><span class="sig-paren">(</span><em class="sig-param">document</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.get_acrofields"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.get_acrofields" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.get_annots_fields_values">
+<code class="sig-name descname">get_annots_fields_values</code><span class="sig-paren">(</span><em class="sig-param">acrofields</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.get_annots_fields_values"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.get_annots_fields_values" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.get_new_pagedata">
+<code class="sig-name descname">get_new_pagedata</code><span class="sig-paren">(</span><em class="sig-param">pagedata</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.get_new_pagedata"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.get_new_pagedata" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.get_new_rootdata">
+<code class="sig-name descname">get_new_rootdata</code><span class="sig-paren">(</span><em class="sig-param">rootdata</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.get_new_rootdata"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.get_new_rootdata" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.get_rect_array">
+<code class="sig-name descname">get_rect_array</code><span class="sig-paren">(</span><em class="sig-param">pagedata</em>, <em class="sig-param">position</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.get_rect_array"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.get_rect_array" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.get_sig_names">
+<code class="sig-name descname">get_sig_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.get_sig_names"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.get_sig_names" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.get_signature_names">
+<code class="sig-name descname">get_signature_names</code><span class="sig-paren">(</span><em class="sig-param">document</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.get_signature_names"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.get_signature_names" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.getdata">
+<code class="sig-name descname">getdata</code><span class="sig-paren">(</span><em class="sig-param">pdfdata1</em>, <em class="sig-param">objid</em>, <em class="sig-param">startxref</em>, <em class="sig-param">document</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.getdata"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.getdata" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_invisible_sig_objs">
+<code class="sig-name descname">make_invisible_sig_objs</code><span class="sig-paren">(</span><em class="sig-param">udct</em>, <em class="sig-param">no</em>, <em class="sig-param">page</em>, <em class="sig-param">pagedata</em>, <em class="sig-param">infodata</em>, <em class="sig-param">rootdata</em>, <em class="sig-param">zeros</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_invisible_sig_objs"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_invisible_sig_objs" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_invisible_xref">
+<code class="sig-name descname">make_invisible_xref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_invisible_xref"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_invisible_xref" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_multi_inv_sig_objs">
+<code class="sig-name descname">make_multi_inv_sig_objs</code><span class="sig-paren">(</span><em class="sig-param">document</em>, <em class="sig-param">udct</em>, <em class="sig-param">no</em>, <em class="sig-param">page</em>, <em class="sig-param">pagedata</em>, <em class="sig-param">infodata</em>, <em class="sig-param">rootdata</em>, <em class="sig-param">zeros</em>, <em class="sig-param">sig_number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_multi_inv_sig_objs"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_multi_inv_sig_objs" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_multi_inv_xref">
+<code class="sig-name descname">make_multi_inv_xref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_multi_inv_xref"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_multi_inv_xref" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_multi_visible_sig_objs">
+<code class="sig-name descname">make_multi_visible_sig_objs</code><span class="sig-paren">(</span><em class="sig-param">document</em>, <em class="sig-param">udct</em>, <em class="sig-param">no</em>, <em class="sig-param">page</em>, <em class="sig-param">pagedata</em>, <em class="sig-param">infodata</em>, <em class="sig-param">rootdata</em>, <em class="sig-param">stream_name</em>, <em class="sig-param">rect</em>, <em class="sig-param">zeros</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_multi_visible_sig_objs"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_multi_visible_sig_objs" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_multi_visible_xref">
+<code class="sig-name descname">make_multi_visible_xref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_multi_visible_xref"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_multi_visible_xref" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_visible_sig_objs">
+<code class="sig-name descname">make_visible_sig_objs</code><span class="sig-paren">(</span><em class="sig-param">udct</em>, <em class="sig-param">no</em>, <em class="sig-param">page</em>, <em class="sig-param">pagedata</em>, <em class="sig-param">infodata</em>, <em class="sig-param">rootdata</em>, <em class="sig-param">stream_name</em>, <em class="sig-param">rect</em>, <em class="sig-param">zeros</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_visible_sig_objs"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_visible_sig_objs" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.make_visible_xref">
+<code class="sig-name descname">make_visible_xref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.make_visible_xref"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.make_visible_xref" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.makeobj">
+<code class="sig-name descname">makeobj</code><span class="sig-paren">(</span><em class="sig-param">no</em>, <em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.makeobj"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.makeobj" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.makeobj_font_stream">
+<code class="sig-name descname">makeobj_font_stream</code><span class="sig-paren">(</span><em class="sig-param">no</em>, <em class="sig-param">data</em>, <em class="sig-param">stream</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.makeobj_font_stream"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.makeobj_font_stream" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.makeobj_stream">
+<code class="sig-name descname">makeobj_stream</code><span class="sig-paren">(</span><em class="sig-param">no</em>, <em class="sig-param">data</em>, <em class="sig-param">stream</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.makeobj_stream"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.makeobj_stream" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.makepdf">
+<code class="sig-name descname">makepdf</code><span class="sig-paren">(</span><em class="sig-param">pdfdata1</em>, <em class="sig-param">udct</em>, <em class="sig-param">zeros</em>, <em class="sig-param">sig_attributes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.makepdf"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.makepdf" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.pdf_builder.SignedData.sign">
+<code class="sig-name descname">sign</code><span class="sig-paren">(</span><em class="sig-param">datau</em>, <em class="sig-param">session</em>, <em class="sig-param">cert</em>, <em class="sig-param">cert_value</em>, <em class="sig-param">algomd</em>, <em class="sig-param">sig_attributes</em>, <em class="sig-param">timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#SignedData.sign"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.SignedData.sign" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.pdf_builder.sign">
+<code class="sig-prename descclassname">digital_signature.pdf_builder.</code><code class="sig-name descname">sign</code><span class="sig-paren">(</span><em class="sig-param">datau</em>, <em class="sig-param">session</em>, <em class="sig-param">cert</em>, <em class="sig-param">cert_value</em>, <em class="sig-param">algomd</em>, <em class="sig-param">sig_attributes</em>, <em class="sig-param">timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#sign"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.sign" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.pdf_signer">
+<span id="digital-signature-pdf-signer"></span><h2>digital_signature.pdf_signer<a class="headerlink" href="#module-digital_signature.pdf_signer" title="Link a questa intestazione">¶</a></h2>
+<dl class="function">
+<dt id="digital_signature.pdf_signer.sign">
+<code class="sig-prename descclassname">digital_signature.pdf_signer.</code><code class="sig-name descname">sign</code><span class="sig-paren">(</span><em class="sig-param">datau</em>, <em class="sig-param">session</em>, <em class="sig-param">cert</em>, <em class="sig-param">cert_value</em>, <em class="sig-param">hashalgo</em>, <em class="sig-param">attrs=True</em>, <em class="sig-param">signed_value=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/pdf_signer.html#sign"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_signer.sign" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.revocation_checker">
+<span id="digital-signature-revocation-checker"></span><h2>digital_signature.revocation_checker<a class="headerlink" href="#module-digital_signature.revocation_checker" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.revocation_checker.RevocationChecker">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.revocation_checker.</code><code class="sig-name descname">RevocationChecker</code><a class="reference internal" href="_modules/digital_signature/revocation_checker.html#RevocationChecker"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.revocation_checker.RevocationChecker" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.revocation_checker.RevocationChecker.check">
+<code class="sig-name descname">check</code><span class="sig-paren">(</span><em class="sig-param">revocation_checker_url</em>, <em class="sig-param">certificate_value</em>, <em class="sig-param">params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/revocation_checker.html#RevocationChecker.check"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.revocation_checker.RevocationChecker.check" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.signature_util">
+<span id="digital-signature-signature-util"></span><h2>digital_signature.signature_util<a class="headerlink" href="#module-digital_signature.signature_util" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.signature_util.SignatureUtils">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.signature_util.</code><code class="sig-name descname">SignatureUtils</code><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.close_session">
+<em class="property">static </em><code class="sig-name descname">close_session</code><span class="sig-paren">(</span><em class="sig-param">session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.close_session"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.close_session" title="Link a questa definizione">¶</a></dt>
+<dd><p>Close smart card <cite>session</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.digest">
+<em class="property">static </em><code class="sig-name descname">digest</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">content</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.digest"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.digest" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return <cite>content</cite> hash</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session
+content: content to hash</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.fetch_certificate">
+<em class="property">static </em><code class="sig-name descname">fetch_certificate</code><span class="sig-paren">(</span><em class="sig-param">session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.fetch_certificate"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.fetch_certificate" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return smart card certificate</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.fetch_private_key">
+<em class="property">static </em><code class="sig-name descname">fetch_private_key</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">certificate</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.fetch_private_key"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.fetch_private_key" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return smart card private key reference</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session
+certificate: certificate connected to the key</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.fetch_public_key">
+<em class="property">static </em><code class="sig-name descname">fetch_public_key</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">certificate</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.fetch_public_key"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.fetch_public_key" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return smart card public key reference</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session
+certificate: certificate connected to the key</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.fetch_smart_card_sessions">
+<em class="property">static </em><code class="sig-name descname">fetch_smart_card_sessions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.fetch_smart_card_sessions"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.fetch_smart_card_sessions" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return a <cite>session</cite> list for the connected smart cards</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.get_certificate_issuer">
+<em class="property">static </em><code class="sig-name descname">get_certificate_issuer</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">certificate</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.get_certificate_issuer"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.get_certificate_issuer" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return the issuer of <cite>certificate</cite></p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session
+certificate: smart card certificate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.get_certificate_serial_number">
+<em class="property">static </em><code class="sig-name descname">get_certificate_serial_number</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">certificate</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.get_certificate_serial_number"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.get_certificate_serial_number" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return the serial number of <cite>certificate</cite></p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session
+certificate: smart card certificate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.get_certificate_value">
+<em class="property">static </em><code class="sig-name descname">get_certificate_value</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">certificate</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.get_certificate_value"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.get_certificate_value" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return the value of <cite>certificate</cite></p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session
+certificate: smart card certificate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.signature">
+<em class="property">static </em><code class="sig-name descname">signature</code><span class="sig-paren">(</span><em class="sig-param">session</em>, <em class="sig-param">priv_key</em>, <em class="sig-param">content</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.signature"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.signature" title="Link a questa definizione">¶</a></dt>
+<dd><p>Sign <cite>content</cite> with <cite>privKey</cite> reference</p>
+<dl class="simple">
+<dt>Reurn:</dt><dd><p>signature in bytearray</p>
+</dd>
+<dt>Params:</dt><dd><p>session: smart card session.
+privKey: reference to the smart card private key.
+content: bytes to hash and sign</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.user_login">
+<em class="property">static </em><code class="sig-name descname">user_login</code><span class="sig-paren">(</span><em class="sig-param">sessions</em>, <em class="sig-param">pin</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.user_login"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.user_login" title="Link a questa definizione">¶</a></dt>
+<dd><p>User login on a <cite>session</cite> using <cite>pin</cite></p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>sessions: smart card session list
+pin: user pin</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Ritorna</dt>
+<dd class="field-odd"><p>the logged in session</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.signature_util.SignatureUtils.user_logout">
+<em class="property">static </em><code class="sig-name descname">user_logout</code><span class="sig-paren">(</span><em class="sig-param">session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/signature_util.html#SignatureUtils.user_logout"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SignatureUtils.user_logout" title="Link a questa definizione">¶</a></dt>
+<dd><p>User logout from a <cite>session</cite></p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>session: smart card session</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="digital_signature.signature_util.SmartCardConnectionError">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.signature_util.</code><code class="sig-name descname">SmartCardConnectionError</code><a class="reference internal" href="_modules/digital_signature/signature_util.html#SmartCardConnectionError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.signature_util.SmartCardConnectionError" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">ConnectionError</span></code></p>
+</div></blockquote>
+<p>Raised when something goes wrong with the smart card</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.singleton_type">
+<span id="digital-signature-singleton-type"></span><h2>digital_signature.singleton_type<a class="headerlink" href="#module-digital_signature.singleton_type" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.singleton_type.SingletonType">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.singleton_type.</code><code class="sig-name descname">SingletonType</code><a class="reference internal" href="_modules/digital_signature/singleton_type.html#SingletonType"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.singleton_type.SingletonType" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</div></blockquote>
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.update_checker">
+<span id="digital-signature-update-checker"></span><h2>digital_signature.update_checker<a class="headerlink" href="#module-digital_signature.update_checker" title="Link a questa intestazione">¶</a></h2>
+<dl class="function">
+<dt id="digital_signature.update_checker.UpdatePyUpdaterClientConfig">
+<code class="sig-prename descclassname">digital_signature.update_checker.</code><code class="sig-name descname">UpdatePyUpdaterClientConfig</code><span class="sig-paren">(</span><em class="sig-param">revocation_checker_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/update_checker.html#UpdatePyUpdaterClientConfig"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.update_checker.UpdatePyUpdaterClientConfig" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="digital_signature.update_checker.UpdateStatus">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.update_checker.</code><code class="sig-name descname">UpdateStatus</code><a class="reference internal" href="_modules/digital_signature/update_checker.html#UpdateStatus"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.update_checker.UpdateStatus" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<p>Enumerated data type</p>
+<dl class="attribute">
+<dt id="digital_signature.update_checker.UpdateStatus.COULDNT_CHECK_FOR_UPDATES">
+<code class="sig-name descname">COULDNT_CHECK_FOR_UPDATES</code><em class="property"> = 5</em><a class="headerlink" href="#digital_signature.update_checker.UpdateStatus.COULDNT_CHECK_FOR_UPDATES" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.update_checker.UpdateStatus.EXTRACTING_UPDATE_AND_RESTARTING">
+<code class="sig-name descname">EXTRACTING_UPDATE_AND_RESTARTING</code><em class="property"> = 3</em><a class="headerlink" href="#digital_signature.update_checker.UpdateStatus.EXTRACTING_UPDATE_AND_RESTARTING" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.update_checker.UpdateStatus.NO_AVAILABLE_UPDATES">
+<code class="sig-name descname">NO_AVAILABLE_UPDATES</code><em class="property"> = 1</em><a class="headerlink" href="#digital_signature.update_checker.UpdateStatus.NO_AVAILABLE_UPDATES" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.update_checker.UpdateStatus.UNKNOWN">
+<code class="sig-name descname">UNKNOWN</code><em class="property"> = 0</em><a class="headerlink" href="#digital_signature.update_checker.UpdateStatus.UNKNOWN" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.update_checker.UpdateStatus.UPDATE_AVAILABLE_BUT_APP_NOT_FROZEN">
+<code class="sig-name descname">UPDATE_AVAILABLE_BUT_APP_NOT_FROZEN</code><em class="property"> = 4</em><a class="headerlink" href="#digital_signature.update_checker.UpdateStatus.UPDATE_AVAILABLE_BUT_APP_NOT_FROZEN" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="digital_signature.update_checker.UpdateStatus.UPDATE_DOWNLOAD_FAILED">
+<code class="sig-name descname">UPDATE_DOWNLOAD_FAILED</code><em class="property"> = 2</em><a class="headerlink" href="#digital_signature.update_checker.UpdateStatus.UPDATE_DOWNLOAD_FAILED" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.update_checker.check_for_updates">
+<code class="sig-prename descclassname">digital_signature.update_checker.</code><code class="sig-name descname">check_for_updates</code><span class="sig-paren">(</span><em class="sig-param">rev_checker_url=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/update_checker.html#check_for_updates"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.update_checker.check_for_updates" title="Link a questa definizione">¶</a></dt>
+<dd><p>Controllo nuovi aggiornamenti.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><p><strong>update_checker_url</strong> (<em>str</em><em>, </em><em>optional</em>) – Url server degli aggiornamenti, defaults to None</p>
+</dd>
+<dt class="field-even">Ritorna</dt>
+<dd class="field-even"><p>UpdateObject utilizzato per aggiornare i binari</p>
+</dd>
+<dt class="field-odd">Tipo di ritorno</dt>
+<dd class="field-odd"><p>AppUpdate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.update_checker.progress">
+<code class="sig-prename descclassname">digital_signature.update_checker.</code><code class="sig-name descname">progress</code><span class="sig-paren">(</span><em class="sig-param">data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/update_checker.html#progress"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.update_checker.progress" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.update_checker.run_updates">
+<code class="sig-prename descclassname">digital_signature.update_checker.</code><code class="sig-name descname">run_updates</code><span class="sig-paren">(</span><em class="sig-param">app_update</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/update_checker.html#run_updates"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.update_checker.run_updates" title="Link a questa definizione">¶</a></dt>
+<dd><p>Lancia il download dell’aggiornamento e al completamento estrae il file dal zip e riavvia l’applicazione</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parametri</dt>
+<dd class="field-odd"><p><strong>app_update</strong> (<em>AppUpdate</em>) – UpdateObject utilizzato per aggiornare i binari</p>
+</dd>
+<dt class="field-even">Ritorna</dt>
+<dd class="field-even"><p>Lo stato dell’aggiornamento</p>
+</dd>
+<dt class="field-odd">Tipo di ritorno</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#digital_signature.update_checker.UpdateStatus" title="digital_signature.update_checker.UpdateStatus">UpdateStatus</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.verifier">
+<span id="digital-signature-verifier"></span><h2>digital_signature.verifier<a class="headerlink" href="#module-digital_signature.verifier" title="Link a questa intestazione">¶</a></h2>
+<dl class="class">
+<dt id="digital_signature.verifier.VerifyData">
+<em class="property">class </em><code class="sig-prename descclassname">digital_signature.verifier.</code><code class="sig-name descname">VerifyData</code><span class="sig-paren">(</span><em class="sig-param">trustedCerts=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/verifier.html#VerifyData"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.verifier.VerifyData" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</div></blockquote>
+<dl class="method">
+<dt id="digital_signature.verifier.VerifyData.add_cert">
+<code class="sig-name descname">add_cert</code><span class="sig-paren">(</span><em class="sig-param">trusted_cert</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/verifier.html#VerifyData.add_cert"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.verifier.VerifyData.add_cert" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.verifier.VerifyData.verify">
+<code class="sig-name descname">verify</code><span class="sig-paren">(</span><em class="sig-param">datas</em>, <em class="sig-param">datau</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/verifier.html#VerifyData.verify"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.verifier.VerifyData.verify" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="digital_signature.verifier.VerifyData.verify_cert">
+<code class="sig-name descname">verify_cert</code><span class="sig-paren">(</span><em class="sig-param">cert_pem</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/verifier.html#VerifyData.verify_cert"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.verifier.VerifyData.verify_cert" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.verifier.verify">
+<code class="sig-prename descclassname">digital_signature.verifier.</code><code class="sig-name descname">verify</code><span class="sig-paren">(</span><em class="sig-param">datas</em>, <em class="sig-param">datau</em>, <em class="sig-param">certs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/verifier.html#verify"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.verifier.verify" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature.verify">
+<span id="digital-signature-verify"></span><h2>digital_signature.verify<a class="headerlink" href="#module-digital_signature.verify" title="Link a questa intestazione">¶</a></h2>
+<dl class="function">
+<dt id="digital_signature.verify.verify">
+<code class="sig-prename descclassname">digital_signature.verify.</code><code class="sig-name descname">verify</code><span class="sig-paren">(</span><em class="sig-param">pdfdata</em>, <em class="sig-param">certs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/verify.html#verify"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.verify.verify" title="Link a questa definizione">¶</a></dt>
+<dd><p>Return the Hash, Signature and Cert verification result for each signature in the pdf</p>
+<dl class="simple">
+<dt>Params:</dt><dd><p>pdfdata: Pdf content as bytes
+certs: List of certificates</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-digital_signature">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-digital_signature" title="Link a questa intestazione">¶</a></h2>
+<p>FirmaJR version 0.0.4</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Documentazione API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.client_config">digital_signature.client_config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.digiSign_lib">digital_signature.digiSign_lib</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.digiSign_server">digital_signature.digiSign_server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.my_config_loader">digital_signature.my_config_loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.my_logger">digital_signature.my_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.p7m_encoder">digital_signature.p7m_encoder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.pdf_builder">digital_signature.pdf_builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.pdf_signer">digital_signature.pdf_signer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.revocation_checker">digital_signature.revocation_checker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.signature_util">digital_signature.signature_util</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.singleton_type">digital_signature.singleton_type</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.update_checker">digital_signature.update_checker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.verifier">digital_signature.verifier</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature.verify">digital_signature.verify</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-digital_signature">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="firma_pdf.html" title="capitolo precedente">Firma PDF</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/digital_signature.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

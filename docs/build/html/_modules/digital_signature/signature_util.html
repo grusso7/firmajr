@@ -1,0 +1,420 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>digital_signature.signature_util &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="Indice" href="../../genindex.html" />
+    <link rel="search" title="Cerca" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Codice sorgente per digital_signature.signature_util</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">my_config_loader</span> <span class="kn">import</span> <span class="n">MyConfigLoader</span>
+<span class="kn">from</span> <span class="nn">my_logger</span> <span class="kn">import</span> <span class="n">MyLogger</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">devnull</span><span class="p">,</span> <span class="n">fsdecode</span>
+<span class="kn">from</span> <span class="nn">PyKCS11</span> <span class="kn">import</span> <span class="n">PyKCS11Lib</span><span class="p">,</span> <span class="n">Mechanism</span><span class="p">,</span> <span class="n">LowLevel</span>
+<span class="kn">from</span> <span class="nn">asn1crypto.x509</span> <span class="kn">import</span> <span class="n">Certificate</span>
+
+<span class="c1">####################################################################</span>
+<span class="c1">#       CONFIGURATION                                              #</span>
+<span class="c1">####################################################################</span>
+<span class="c1"># driver directory</span>
+<span class="n">DRIVER_FOLDER</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;driver_folder&quot;</span><span class="p">]</span>
+<span class="c1">####################################################################</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">MyLogger</span><span class="p">()</span><span class="o">.</span><span class="n">my_logger</span><span class="p">()</span>
+
+
+<span class="c1"># custom exceptions</span>
+<div class="viewcode-block" id="SmartCardConnectionError"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SmartCardConnectionError">[documenti]</a><span class="k">class</span> <span class="nc">SmartCardConnectionError</span><span class="p">(</span><span class="ne">ConnectionError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Raised when something goes wrong with the smart card &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SignatureUtils"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils">[documenti]</a><span class="k">class</span> <span class="nc">SignatureUtils</span><span class="p">:</span>
+
+<div class="viewcode-block" id="SignatureUtils.fetch_smart_card_sessions"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.fetch_smart_card_sessions">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fetch_smart_card_sessions</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot; Return a `session` list for the connected smart cards &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading drivers&quot;</span><span class="p">)</span>
+        <span class="n">pkcs11</span> <span class="o">=</span> <span class="n">PyKCS11Lib</span><span class="p">()</span>
+        <span class="n">driver_loaded</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># try with default</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pkcs11</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+            <span class="n">driver_loaded</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;no default driver&quot;</span><span class="p">)</span>
+
+        <span class="c1"># anyway load known drivers</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">DRIVER_FOLDER</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pkcs11</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;driver {fsdecode(file)} loaded&quot;</span><span class="p">)</span>
+                <span class="n">driver_loaded</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;driver {fsdecode(file)} NOT loaded&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+        <span class="c1"># cannot load any driver file</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">driver_loaded</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;No driver found&quot;</span><span class="p">)</span>
+
+        <span class="n">slots</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="o">.</span><span class="n">_fetch_slots</span><span class="p">(</span><span class="n">pkcs11</span><span class="p">)</span>
+
+        <span class="n">sessions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">session</span> <span class="o">=</span> <span class="n">pkcs11</span><span class="o">.</span><span class="n">openSession</span><span class="p">(</span>
+                    <span class="n">slot</span><span class="p">,</span> <span class="n">LowLevel</span><span class="o">.</span><span class="n">CKS_RW_PUBLIC_SESSION</span><span class="p">)</span>
+                <span class="n">sessions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sessions</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;Can not open any session&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sessions</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fetch_slots</span><span class="p">(</span><span class="n">pkcs11_lib</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a `slot list` (connected Smart Cards) &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;getting slots&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">slots</span> <span class="o">=</span> <span class="n">pkcs11_lib</span><span class="o">.</span><span class="n">getSlotList</span><span class="p">(</span><span class="n">tokenPresent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">slots</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">()</span>  <span class="c1"># only to get to the external except block</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">slots</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;No smart card slot found&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SignatureUtils.close_session"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.close_session">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">close_session</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Close smart card `session` &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Close smart card session&quot;</span><span class="p">)</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">closeSession</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.user_login"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.user_login">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">user_login</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">pin</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            User login on a `session` using `pin`</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                sessions: smart card session list</span>
+<span class="sd">                pin: user pin</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                the logged in session</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;user login&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="n">sessions</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">session</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">pin</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">session</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span>
+            <span class="s2">&quot;Can not login on any sessions provided&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.user_logout"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.user_logout">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">user_logout</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            User logout from a `session`</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;user logout&quot;</span><span class="p">)</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">logout</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.fetch_certificate"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.fetch_certificate">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fetch_certificate</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return smart card certificate</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;fetching certificate&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">certificates</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">findObjects</span><span class="p">(</span>
+                <span class="p">[(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_CLASS</span><span class="p">,</span> <span class="n">LowLevel</span><span class="o">.</span><span class="n">CKO_CERTIFICATE</span><span class="p">)])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;Certificate not found&quot;</span><span class="p">)</span>
+
+        <span class="n">certificate</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;picking non_repudiation certificate&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cert</span> <span class="ow">in</span> <span class="n">certificates</span><span class="p">:</span>
+            <span class="n">cert_value</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="o">.</span><span class="n">get_certificate_value</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">cert</span><span class="p">)</span>
+            <span class="n">x509</span> <span class="o">=</span> <span class="n">Certificate</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cert_value</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">key_usage</span> <span class="o">=</span> <span class="n">x509</span><span class="o">.</span><span class="n">key_usage_value</span>
+                <span class="k">if</span> <span class="s1">&#39;non_repudiation&#39;</span> <span class="ow">in</span> <span class="n">key_usage</span><span class="o">.</span><span class="n">native</span><span class="p">:</span>
+                    <span class="n">certificate</span> <span class="o">=</span> <span class="n">cert</span>
+                    <span class="k">break</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;key usage not found, skip this certificate&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">certificate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;non_repudiation certificate not found, pick the latest one&quot;</span><span class="p">)</span>
+            <span class="n">last_certificate_index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">certificates</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">certificate</span> <span class="o">=</span> <span class="n">certificates</span><span class="p">[</span><span class="n">last_certificate_index</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">certificate</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.get_certificate_value"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.get_certificate_value">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_certificate_value</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return the value of `certificate`</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">                certificate: smart card certificate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;fetching certificate value&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">certificate_value</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">getAttributeValue</span><span class="p">(</span>
+                <span class="n">certificate</span><span class="p">,</span> <span class="p">[</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_VALUE</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;Certificate has no valid value&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">certificate_value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.get_certificate_issuer"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.get_certificate_issuer">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_certificate_issuer</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return the issuer of `certificate`</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">                certificate: smart card certificate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;fetching certificate issuer&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">certificate_issuer</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">getAttributeValue</span><span class="p">(</span>
+                <span class="n">certificate</span><span class="p">,</span> <span class="p">[</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_ISSUER</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;Certificate has no valid issuer&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">certificate_issuer</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.get_certificate_serial_number"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.get_certificate_serial_number">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_certificate_serial_number</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return the serial number of `certificate`</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">                certificate: smart card certificate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;fetching certificate serial number&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">serial_number</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">getAttributeValue</span><span class="p">(</span>
+                <span class="n">certificate</span><span class="p">,</span> <span class="p">[</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_SERIAL_NUMBER</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span>
+                <span class="s2">&quot;Certificate has no valid serial number&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">int_serial_number</span> <span class="o">=</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span>
+                <span class="n">serial_number</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s1">&#39;big&#39;</span><span class="p">,</span> <span class="n">signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span>
+                <span class="s2">&quot;Can not cast certificate serial number to integer&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">int_serial_number</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.fetch_private_key"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.fetch_private_key">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fetch_private_key</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return smart card private key reference</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">                certificate: certificate connected to the key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;fetching private key&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># getting the certificate id</span>
+            <span class="n">identifier</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">getAttributeValue</span><span class="p">(</span>
+                <span class="n">certificate</span><span class="p">,</span> <span class="p">[</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_ID</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># same as the key id</span>
+            <span class="n">priv_key</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">findObjects</span><span class="p">([</span>
+                <span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_CLASS</span><span class="p">,</span> <span class="n">LowLevel</span><span class="o">.</span><span class="n">CKO_PRIVATE_KEY</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_ID</span><span class="p">,</span> <span class="n">identifier</span><span class="p">)])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span>
+                <span class="s2">&quot;Certificate has no valid private key&quot;</span><span class="p">)</span>
+        <span class="c1"># if you don&#39;t print priv_key you get a sign general error -.-</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">priv_key</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="n">devnull</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">))</span>  <span class="c1"># to avoid general error</span>
+        <span class="k">return</span> <span class="n">priv_key</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.fetch_public_key"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.fetch_public_key">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fetch_public_key</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return smart card public key reference</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">                certificate: certificate connected to the key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;fetching public key&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># getting the certificate id</span>
+            <span class="n">identifier</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">getAttributeValue</span><span class="p">(</span>
+                <span class="n">certificate</span><span class="p">,</span> <span class="p">[</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_ID</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># same as the key id</span>
+            <span class="n">pub_key</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">findObjects</span><span class="p">([</span>
+                <span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_CLASS</span><span class="p">,</span> <span class="n">LowLevel</span><span class="o">.</span><span class="n">CKO_PUBLIC_KEY</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_ID</span><span class="p">,</span> <span class="n">identifier</span><span class="p">)])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span>
+                <span class="s2">&quot;Certificate has no valid public key&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pub_key</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.digest"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.digest">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">digest</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Return `content` hash</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session</span>
+<span class="sd">                content: content to hash</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;hashing content&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">digest</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">Mechanism</span><span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKM_SHA256</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;Failed on digest content&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">digest</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SignatureUtils.signature"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.signature_util.SignatureUtils.signature">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">priv_key</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Sign `content` with `privKey` reference</span>
+
+<span class="sd">            Reurn:</span>
+<span class="sd">                signature in bytearray</span>
+
+<span class="sd">            Params:</span>
+<span class="sd">                session: smart card session.</span>
+<span class="sd">                privKey: reference to the smart card private key.</span>
+<span class="sd">                content: bytes to hash and sign</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;signing content&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">signature</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">priv_key</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">Mechanism</span><span class="p">(</span>
+                <span class="n">LowLevel</span><span class="o">.</span><span class="n">CKM_SHA256_RSA_PKCS</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;Failed on sign content&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Codice del modulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

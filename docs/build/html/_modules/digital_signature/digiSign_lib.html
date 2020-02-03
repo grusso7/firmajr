@@ -1,0 +1,508 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>digital_signature.digiSign_lib &#8212; FirmaJR 0.0.1 documentazione</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/translations.js"></script>
+    <link rel="index" title="Indice" href="../../genindex.html" />
+    <link rel="search" title="Cerca" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Codice sorgente per digital_signature.digiSign_lib</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">mimetypes</span>
+<span class="kn">from</span> <span class="nn">asn1crypto</span> <span class="kn">import</span> <span class="n">cms</span>
+<span class="kn">from</span> <span class="nn">my_logger</span> <span class="kn">import</span> <span class="n">MyLogger</span>
+<span class="kn">from</span> <span class="nn">OpenSSL</span> <span class="kn">import</span> <span class="n">crypto</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">p7m_encoder</span> <span class="kn">import</span> <span class="n">P7mEncoder</span><span class="p">,</span> <span class="n">P7mAttributes</span>
+<span class="kn">from</span> <span class="nn">signature_util</span> <span class="kn">import</span> <span class="n">SignatureUtils</span>
+<span class="kn">from</span> <span class="nn">tkinter</span> <span class="kn">import</span> <span class="n">Tk</span><span class="p">,</span> <span class="n">Label</span><span class="p">,</span> <span class="n">Button</span><span class="p">,</span> <span class="n">Frame</span>
+<span class="kn">from</span> <span class="nn">verify</span> <span class="kn">import</span> <span class="n">verify</span>
+<span class="kn">import</span> <span class="nn">pdf_builder</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">MyLogger</span><span class="p">()</span><span class="o">.</span><span class="n">my_logger</span><span class="p">()</span>
+
+
+<span class="c1"># Custom exceptions:</span>
+<div class="viewcode-block" id="P7mCreationError"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.P7mCreationError">[documenti]</a><span class="k">class</span> <span class="nc">P7mCreationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Raised when failing to create p7m &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="PdfVerificationError"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.PdfVerificationError">[documenti]</a><span class="k">class</span> <span class="nc">PdfVerificationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Raised when failing to create p7m &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="CertificateValidityError"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.CertificateValidityError">[documenti]</a><span class="k">class</span> <span class="nc">CertificateValidityError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Raised for validity problems on the certificate &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="CertificateOwnerException"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.CertificateOwnerException">[documenti]</a><span class="k">class</span> <span class="nc">CertificateOwnerException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Raised if user_cf is not equal to smart card cf &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="DigiSignLib"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib">[documenti]</a><span class="k">class</span> <span class="nc">DigiSignLib</span><span class="p">:</span>
+<div class="viewcode-block" id="DigiSignLib.get_smart_cards_sessions"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.get_smart_cards_sessions">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_smart_cards_sessions</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot; Check for connected smart card</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                a session list of connected smart cards</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># getting a smart card session</span>
+        <span class="k">return</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">fetch_smart_card_sessions</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.session_login"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.session_login">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">session_login</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">pin</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Attempt to login on connected smart cards</span>
+
+<span class="sd">            Param:</span>
+<span class="sd">                sessions: connected smart card slots</span>
+<span class="sd">                pin: user pin</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                logged in session</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># login on the session</span>
+        <span class="k">return</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">user_login</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.sign_p7m"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.sign_p7m">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">sign_p7m</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">open_session</span><span class="p">,</span> <span class="n">user_cf</span><span class="p">,</span> <span class="n">sig_attrs</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">check_cf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Metodo per la gestione della firma P7M</span>
+
+<span class="sd">        :param file_path: Path del file da firmare</span>
+<span class="sd">        :type file_path: str</span>
+<span class="sd">        :param open_session: La sessione aperta della smartcard</span>
+<span class="sd">        :type open_session: Object</span>
+<span class="sd">        :param user_cf: Codice fiscale dell&#39;utente</span>
+<span class="sd">        :type user_cf: str</span>
+<span class="sd">        :param sig_attrs: Parametri della firma</span>
+<span class="sd">        :type sig_attrs: Obj</span>
+<span class="sd">        :param timestamp: Timestamp dell&#39;ora di firma</span>
+<span class="sd">        :type timestamp: timestamp</span>
+<span class="sd">        :param check_cf: Parametro per fare o no il controllo del codice fiscale</span>
+<span class="sd">        :type check_cf: bool</span>
+<span class="sd">        :raises P7mCreationError: Errore nella creazione del P7M</span>
+<span class="sd">        :return: Il path del file firmato in P7M</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># fetching sig type</span>
+        <span class="n">sig_type</span> <span class="o">=</span> <span class="n">sig_attrs</span><span class="p">[</span><span class="s1">&#39;p7m_sig_type&#39;</span><span class="p">]</span>
+        <span class="c1"># fetching file content</span>
+        <span class="n">file_content</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_file_content</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+        <span class="c1"># check existing signatures</span>
+        <span class="n">p7m_attrs</span> <span class="o">=</span> <span class="n">P7mAttributes</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">mime</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">MimeTypes</span><span class="p">()</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">file_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">mime</span> <span class="o">==</span> <span class="s1">&#39;application/pkcs7&#39;</span> <span class="ow">or</span> <span class="n">mime</span> <span class="o">==</span> <span class="s1">&#39;application/pkcs7-mime&#39;</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">cms</span><span class="o">.</span><span class="n">ContentInfo</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file_content</span><span class="p">)</span>
+            <span class="c1"># retrieving existing signatures attributes</span>
+            <span class="n">signed_data</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+            <span class="n">p7m_attrs</span><span class="o">.</span><span class="n">algos</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;digest_algorithms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span>
+            <span class="n">p7m_attrs</span><span class="o">.</span><span class="n">certificates</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;certificates&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span>
+            <span class="k">if</span> <span class="n">sig_type</span> <span class="o">==</span> <span class="s1">&#39;parallel&#39;</span><span class="p">:</span>
+                <span class="n">p7m_attrs</span><span class="o">.</span><span class="n">signer_infos</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;signer_infos&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span>
+                <span class="n">file_content</span> <span class="o">=</span> <span class="n">signed_data</span><span class="p">[</span><span class="s1">&#39;encap_content_info&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">native</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+
+        <span class="c1"># hashing file content</span>
+        <span class="n">file_content_digest</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span><span class="n">open_session</span><span class="p">,</span> <span class="n">file_content</span><span class="p">)</span>
+
+        <span class="c1"># fetching smart card certificate</span>
+        <span class="n">certificate</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate</span><span class="p">(</span><span class="n">open_session</span><span class="p">)</span>
+        <span class="c1"># getting certificate value</span>
+        <span class="n">certificate_value</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate_value</span><span class="p">(</span>
+            <span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span>
+        <span class="c1"># hashing certificate value</span>
+        <span class="n">certificate_value_digest</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span>
+            <span class="n">open_session</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">)</span>
+
+        <span class="c1"># check for signer identity</span>
+        <span class="k">if</span> <span class="n">check_cf</span><span class="p">:</span>
+            <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">_check_certificate_owner</span><span class="p">(</span><span class="n">certificate_value</span><span class="p">,</span> <span class="n">user_cf</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;check for certificate owner skipped&quot;</span><span class="p">)</span>
+
+        <span class="c1"># getting signed attributes p7m field</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">signed_attributes</span> <span class="o">=</span> <span class="n">P7mEncoder</span><span class="p">()</span><span class="o">.</span><span class="n">encode_signed_attributes</span><span class="p">(</span>
+                <span class="n">file_content_digest</span><span class="p">,</span> <span class="n">certificate_value_digest</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">P7mCreationError</span><span class="p">(</span><span class="s2">&quot;Exception on encoding signed attributes&quot;</span><span class="p">)</span>
+        <span class="c1"># getting bytes to be signed</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">bytes_to_sign</span> <span class="o">=</span> <span class="n">P7mEncoder</span><span class="p">()</span><span class="o">.</span><span class="n">bytes_to_sign</span><span class="p">(</span>
+                <span class="n">file_content_digest</span><span class="p">,</span> <span class="n">certificate_value_digest</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">P7mCreationError</span><span class="p">(</span><span class="s2">&quot;Exception on encoding bytes to sign&quot;</span><span class="p">)</span>
+
+        <span class="c1"># fetching private key from smart card</span>
+        <span class="n">priv_key</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">fetch_private_key</span><span class="p">(</span><span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span>
+        <span class="c1"># signing bytes to be signed</span>
+        <span class="n">signed_attributes_signed</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+            <span class="n">open_session</span><span class="p">,</span> <span class="n">priv_key</span><span class="p">,</span> <span class="n">bytes_to_sign</span><span class="p">)</span>
+
+        <span class="c1"># getting issuer from certificate</span>
+        <span class="n">issuer</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate_issuer</span><span class="p">(</span><span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span>
+        <span class="c1"># getting serial number from certificate</span>
+        <span class="n">serial_number</span> <span class="o">=</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate_serial_number</span><span class="p">(</span>
+            <span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span>
+        <span class="c1"># getting signer info p7m field</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">signer_info</span> <span class="o">=</span> <span class="n">P7mEncoder</span><span class="p">()</span><span class="o">.</span><span class="n">encode_signer_info</span><span class="p">(</span>
+                <span class="n">issuer</span><span class="p">,</span> <span class="n">serial_number</span><span class="p">,</span> <span class="n">signed_attributes</span><span class="p">,</span>
+                <span class="n">signed_attributes_signed</span><span class="p">,</span> <span class="n">p7m_attrs</span><span class="o">.</span><span class="n">signer_infos</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">P7mCreationError</span><span class="p">(</span><span class="s2">&quot;Exception on encoding signer info&quot;</span><span class="p">)</span>
+
+        <span class="c1"># create the p7m content</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">output_content</span> <span class="o">=</span> <span class="n">P7mEncoder</span><span class="p">()</span><span class="o">.</span><span class="n">make_a_p7m</span><span class="p">(</span>
+                <span class="n">file_content</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">signer_info</span><span class="p">,</span> <span class="n">p7m_attrs</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">P7mCreationError</span><span class="p">(</span><span class="s2">&quot;Exception on encoding p7m file content&quot;</span><span class="p">)</span>
+
+        <span class="c1"># saves p7m to file</span>
+        <span class="c1">#   extracting needed part of file path</span>
+        <span class="n">signed_file_path</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_signed_files_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;p7m&#39;</span><span class="p">,</span> <span class="n">sig_type</span><span class="p">)</span>
+        <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">save_file_content</span><span class="p">(</span><span class="n">signed_file_path</span><span class="p">,</span> <span class="n">output_content</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">signed_file_path</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.sign_pdf"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.sign_pdf">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">sign_pdf</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">user_cf</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">check_cf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Metodo per la gestione della firma del file PDF</span>
+
+<span class="sd">        :param file_path: Il path del file da firmare</span>
+<span class="sd">        :type file_path: str</span>
+<span class="sd">        :param open_session: La sessione aperta della smartcard</span>
+<span class="sd">        :type open_session: Object</span>
+<span class="sd">        :param certificate: Il certificato della smartcard</span>
+<span class="sd">        :type certificate: Obj</span>
+<span class="sd">        :param certificate_value: Il valore del certificato</span>
+<span class="sd">        :type certificate_value: bytes</span>
+<span class="sd">        :param user_cf: Il codice fiscale dell&#39;utente</span>
+<span class="sd">        :type user_cf: str</span>
+<span class="sd">        :param sig_attributes: I parametri della firma</span>
+<span class="sd">        :type sig_attributes: Obj</span>
+<span class="sd">        :param timestamp: Timestamp dell&#39;ora di firma</span>
+<span class="sd">        :type timestamp: timestamp</span>
+<span class="sd">        :param check_cf: Parametro per fare o no il controllo del codice fiscale</span>
+<span class="sd">        :type check_cf: bool</span>
+<span class="sd">        :raises PdfVerificationError: Errore nella verifica del file firmato</span>
+<span class="sd">        :return: Il path del file firmato in PDF</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># check for signer identity</span>
+        <span class="k">if</span> <span class="n">check_cf</span><span class="p">:</span>
+            <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">_check_certificate_owner</span><span class="p">(</span><span class="n">certificate_value</span><span class="p">,</span> <span class="n">user_cf</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;check for certificate owner skipped&quot;</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;reading pdf file </span><span class="si">{file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">datau</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">datas</span> <span class="o">=</span> <span class="n">pdf_builder</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">datau</span><span class="p">,</span> <span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="s1">&#39;sha256&#39;</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+        <span class="n">signed_file_path</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_signed_files_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;pdf&#39;</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;saving output to </span><span class="si">{signed_file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">signed_file_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">datau</span><span class="p">)</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;verifying pdf signatures of </span><span class="si">{signed_file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">signed_file_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">verify</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="p">[</span><span class="n">certificate_value</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Signature </span><span class="si">%d</span><span class="s1">: &#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Signature </span><span class="si">{key}</span><span class="s2">: </span><span class="si">{res}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;hashok?&#39;</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="n">PdfVerificationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hash verification of Signature </span><span class="si">{key}</span><span class="s2"> is failed.&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;signatureok?&#39;</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="n">PdfVerificationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Signature verification of Signature </span><span class="si">{key}</span><span class="s2"> is failed.&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;certok?&#39;</span><span class="p">]:</span>
+                    <span class="c1"># TODO verify certificates</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Certificate verification of Signature </span><span class="si">{key}</span><span class="s2"> is failed.&quot;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during verification of Signature </span><span class="si">{key}</span><span class="s2">:&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+        <span class="k">return</span> <span class="n">signed_file_path</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.session_logout"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.session_logout">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">session_logout</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; User logout from session &quot;&quot;&quot;</span>
+
+        <span class="c1"># logout from the session</span>
+        <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">user_logout</span><span class="p">(</span><span class="n">session</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.session_close"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.session_close">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">session_close</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Close smart card `session` &quot;&quot;&quot;</span>
+
+        <span class="c1"># session close</span>
+        <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">close_session</span><span class="p">(</span><span class="n">session</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.get_file_content"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.get_file_content">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_file_content</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return `file_path` content in binary form &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;reading file </span><span class="si">{file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">file_content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">file_content</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.save_file_content"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.save_file_content">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">save_file_content</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Save content to `file_path` &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;saving output to </span><span class="si">{file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.get_certificate"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.get_certificate">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_certificate</span><span class="p">(</span><span class="n">session</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Fetch certificate from `session` &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">fetch_certificate</span><span class="p">(</span><span class="n">session</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.get_certificate_value"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.get_certificate_value">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_certificate_value</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get certificate value from `certificate` from `session` &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">SignatureUtils</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate_value</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DigiSignLib.check_certificate_time_validity"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.check_certificate_time_validity">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">check_certificate_time_validity</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">block_if_expired</span><span class="p">,</span> <span class="n">warn_if_expired</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Chech for certificate time validity&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;NOT_VALID_YET&quot;</span><span class="p">:</span>
+            <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">_not_valid_yet_popup</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">CertificateValidityError</span><span class="p">(</span><span class="s2">&quot;Certificate not valid yet&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;EXPIRED&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">block_if_expired</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Certificate expired and block_if_expires setted to True&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">CertificateValidityError</span><span class="p">(</span><span class="s2">&quot;Certificate expired&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">warn_if_expired</span><span class="p">:</span>
+                <span class="n">choice</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">_proceed_with_expired_certificate</span><span class="p">(</span><span class="n">choice</span><span class="p">)</span>
+                <span class="k">if</span> <span class="s2">&quot;continue&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">choice</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Something went wrong with the expired certificate choise popup&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Something went wrong with the expired certificate choise popup&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">choice</span><span class="p">[</span><span class="s2">&quot;continue&quot;</span><span class="p">]:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;User chosen to NOT proceed&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">CertificateValidityError</span><span class="p">(</span><span class="s2">&quot;Certificate expired&quot;</span><span class="p">)</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;User chosen to proceed&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Certificate expired and warn_if_expires setted to False&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_check_certificate_owner</span><span class="p">(</span><span class="n">certificate_value</span><span class="p">,</span> <span class="n">user_cf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check if user_cf is equal to smart card cf. Raise a `CertificateOwnerException` &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Chech for certificate owner&quot;</span><span class="p">)</span>
+        <span class="n">certificate_x509</span> <span class="o">=</span> <span class="n">crypto</span><span class="o">.</span><span class="n">load_certificate</span><span class="p">(</span><span class="n">crypto</span><span class="o">.</span><span class="n">FILETYPE_ASN1</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">certificate_value</span><span class="p">))</span>
+
+        <span class="n">subject</span> <span class="o">=</span> <span class="n">certificate_x509</span><span class="o">.</span><span class="n">get_subject</span><span class="p">()</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">subject</span><span class="o">.</span><span class="n">get_components</span><span class="p">())</span>
+        <span class="n">component</span> <span class="o">=</span> <span class="n">components</span><span class="p">[</span><span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;serialNumber&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())]</span>
+        <span class="n">codice_fiscale</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">decode</span><span class="p">()[</span><span class="o">-</span><span class="mi">16</span><span class="p">:]</span>
+
+        <span class="k">if</span> <span class="n">codice_fiscale</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">!=</span> <span class="n">user_cf</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">CertificateOwnerException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{user_cf}</span><span class="s2"> (input) != </span><span class="si">{codice_fiscale}</span><span class="s2"> (smartcard)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;owner verified&quot;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_not_valid_yet_popup</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot; Little popup for telling the user that his certificate is not valid yet &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Certificate not valid yet&quot;</span><span class="p">)</span>
+        <span class="n">widget</span> <span class="o">=</span> <span class="n">Tk</span><span class="p">()</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+        <span class="n">label1</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Il certificato di firma non è ancora valido,&quot;</span><span class="p">)</span>
+        <span class="n">label2</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;firma digitale annullata&quot;</span><span class="p">)</span>
+        <span class="n">row</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">label1</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+        <span class="n">label2</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">on_click</span><span class="p">():</span>
+            <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+
+        <span class="n">button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">on_click</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;OK&quot;</span><span class="p">)</span>
+        <span class="n">button</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
+        <span class="n">filler</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">filler</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+        <span class="n">widget</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Warning&quot;</span><span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">attributes</span><span class="p">(</span><span class="s2">&quot;-topmost&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">_center</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_proceed_with_expired_certificate</span><span class="p">(</span><span class="n">choice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Little popup for asking the user if he wants to sign with an expired certificate &quot;&quot;&quot;</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Certificate expired&quot;</span><span class="p">)</span>
+        <span class="n">widget</span> <span class="o">=</span> <span class="n">Tk</span><span class="p">()</span>
+        <span class="n">row1</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+        <span class="n">label1</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Il certificato di firma risulta scaduto,&quot;</span><span class="p">)</span>
+        <span class="n">label2</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">row1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;procedere comunque?&quot;</span><span class="p">)</span>
+        <span class="n">row1</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">label1</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+        <span class="n">label2</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">on_click_ok</span><span class="p">():</span>
+            <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+            <span class="n">choice</span><span class="p">[</span><span class="s2">&quot;continue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">def</span> <span class="nf">on_click_nok</span><span class="p">():</span>
+            <span class="n">widget</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+            <span class="n">choice</span><span class="p">[</span><span class="s2">&quot;continue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">row2</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+        <span class="n">button_ok</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">row2</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">on_click_ok</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;OK&quot;</span><span class="p">)</span>
+        <span class="n">button_nok</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">row2</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">on_click_nok</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Annulla&quot;</span><span class="p">)</span>
+        <span class="n">row2</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+        <span class="n">button_ok</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">button_nok</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">filler</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">filler</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
+
+        <span class="n">widget</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Warning&quot;</span><span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">attributes</span><span class="p">(</span><span class="s2">&quot;-topmost&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">_center</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+        <span class="n">widget</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_center</span><span class="p">(</span><span class="n">widget</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Center `widget` on the screen &quot;&quot;&quot;</span>
+        <span class="n">screen_width</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_screenwidth</span><span class="p">()</span>
+        <span class="n">screen_height</span> <span class="o">=</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_screenheight</span><span class="p">()</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">screen_width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_width</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="c1"># Little higher than center</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">screen_height</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">widget</span><span class="o">.</span><span class="n">winfo_height</span><span class="p">()</span>
+
+        <span class="n">widget</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;+{int(x)}+{int(y)}&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DigiSignLib.get_signed_files_path"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_lib.DigiSignLib.get_signed_files_path">[documenti]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_signed_files_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">sig_type</span><span class="p">,</span> <span class="n">p7m_sig_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1">#   extracting needed part of file path</span>
+        <span class="n">signed_file_base_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="n">signed_file_complete_name</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="n">signed_file_name</span><span class="p">,</span> <span class="n">signed_file_extension</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">signed_file_complete_name</span><span class="p">)</span>
+        <span class="c1">#   composing final file name</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">signed_file_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;firmato&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">signed_file_name</span> <span class="o">=</span> <span class="n">signed_file_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;firmato&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">final_file_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{signed_file_name[:start]}</span><span class="s2">(firmato)</span><span class="si">{signed_file_name[start:]}{signed_file_extension}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">final_file_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{signed_file_name}</span><span class="s2">(firmato)</span><span class="si">{signed_file_extension}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">p7m_sig_type</span> <span class="o">!=</span> <span class="s1">&#39;parallel&#39;</span> <span class="ow">and</span> <span class="n">sig_type</span> <span class="o">!=</span> <span class="s1">&#39;pdf&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">p7m_sig_type</span> <span class="o">==</span> <span class="s1">&#39;parallel&#39;</span> <span class="ow">and</span> <span class="n">signed_file_extension</span> <span class="o">==</span> <span class="s1">&#39;.pdf&#39;</span><span class="p">):</span>
+            <span class="n">final_file_name</span> <span class="o">=</span> <span class="n">final_file_name</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{sig_type}</span><span class="s2">&quot;</span>
+        <span class="n">signed_file_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">signed_file_base_path</span><span class="p">,</span> <span class="n">final_file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">signed_file_path</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">FirmaJR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigazione</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../flusso.html">Flusso di esecuzione</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../digital_signature.html">Documentazione API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Codice del modulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Ricerca veloce</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Vai" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Giuseppe Russo.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
