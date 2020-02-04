@@ -1,4 +1,4 @@
-Documentazione di FirmaJR!    |docs|
+Documentazione di FirmaJR!    [![Documentation Status](https://readthedocs.org/projects/firmajr/badge/?version=latest)][1]
 ====================================
 
 
@@ -79,6 +79,4 @@ Indici
 .. _endesive: https://github.com/m32/endesive
 .. _Microsoft Visual C++ 2015 Redistributable Update 3: https://www.microsoft.com/it-IT/download/details.aspx?id=53840
 
-.. |docs| image:: https://readthedocs.org/projects/firmajr/badge/?version=latest
-:target: https://firmajr.readthedocs.io/en/latest/?badge=latest
-:alt: Documentation Status
+[1]: https://firmajr.readthedocs.io/en/latest/?badge=latest
