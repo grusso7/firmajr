@@ -1,6 +1,8 @@
 Documentazione di FirmaJR!
 ==========================================
 
+|build-status| |docs| |coverage|
+
 FirmaJR è un'applicazione che permette di firmare digitalmente documenti.
 
 Il software è scritto in Python 3 con lo scopo di sostituire il precedente scritto in Java. JR sta per Java Removed.

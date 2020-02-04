@@ -39,8 +39,11 @@ Contenuti
 
 .. toctree::
    :maxdepth: 3
+   :caption: Contenuti:
 
-   modules
+   getting_started
+   flusso
+   digital_signature
 
 Licenza
 =======
