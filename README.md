@@ -50,10 +50,10 @@ l'ambiente di sviluppo è necessario che siano soddisfatti i seguenti prerequisi
 
 Per compilare l'eseguibile **DigitalSignature.exe** lanciare da cmd o powershell il seguente comando nella home del progetto:
 
-.. code-block:: shell
+```shell
 
    pyupdater build --app-version=0.0.4 --onefile --windowed --i="D:\Progetti New\Firma 2.0\firma2\Sorgenti\digital_signature\FirmaJR.ico" .\digiSign_server.py
-
+```
 tenendo coerente l'*app-version* con la versione dell'applicazione il cui parametro si trova nel file **__init__.py**
 
 

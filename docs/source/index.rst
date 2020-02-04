@@ -27,13 +27,6 @@ La creazione del protocollo avviene attraverso l'inserimento di una chiave nel r
 Un esempio di chiamata dell'URL è il seguente:
 `firmajr://<parametri>`
 
-Utilizzo
-========
-Allo stato attuale FirmaJR agisce soltanto quando viene effettuata una richiesta da un'applicazione web,
-è previsto in futuro l'utilizzo come client standalone con una propria GUI.
-
-Per i dettagli di utilizzo visitare la sezione apposita. <inserire link>
-
 Contenuti
 =========
 
