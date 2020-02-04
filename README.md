@@ -16,7 +16,7 @@ Caratteristiche
 Installazione
 =============
 Per installare l'applicazione su sistemi Windows bisogna eseguire il setup il quale installerà le librerie necessarie per l'esecuzione su Windows ovvero
-`Microsoft Visual C++ 2015 Redistributable Update 3`_ le quali permettono
+[Microsoft Visual C++ 2015 Redistributable Update 3][9] le quali permettono
 al software di auto aggiornarsi nel caso vengano rilasciati nuovi aggiornamenti.
 L'applicazione viene installata nella home dell'utente corrente (Current User) nella cartella **AppData/Roaming**, quindi un utente generico può
 installarla. Durante il processo di installazione viene fatto un controllo per verificare la presenza delle Redistributable, se non sono presenti
@@ -53,30 +53,24 @@ This software is licensed under the GPLv3 License. See the LICENSE file in the t
 Requisiti
 =========
 * Python 3.*
-* `cryptography`_
-* `asn1crypto`_
-* `pdfminer.six`_
-* `pykcs11`_
-* `PyUpdater`_
+* [cryptography][2]
+* [asn1crypto][3]
+* [pyfpdf][4]
+* [pdfminer.six][5]
+* [pykcs11][6]
+* [PyUpdater][7]
 
 Credits
 =======
-* `endesive`_ by `Grzegorz Makarewicz <https://github.com/m32>`_
-
-Indici
-======
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. _cryptography: https://github.com/pyca/cryptography
-.. _asn1crypto: https://github.com/wbond/asn1crypto
-.. _pyfpdf: https://github.com/reingart/pyfpdf
-.. _pdfminer.six: https://pypi.org/project/pdfminer.six/
-.. _pykcs11: https://pypi.org/project/pykcs11/
-.. _PyUpdater: https://github.com/Digital-Sapphire/PyUpdater
-.. _endesive: https://github.com/m32/endesive
-.. _Microsoft Visual C++ 2015 Redistributable Update 3: https://www.microsoft.com/it-IT/download/details.aspx?id=53840
+* [endesive][8] by [Grzegorz Makarewicz](https://github.com/m32)
 
 [1]: https://firmajr.readthedocs.io/en/latest/?badge=latest
+[2]: https://github.com/pyca/cryptography
+[3]: https://github.com/wbond/asn1crypto
+[4]: https://github.com/reingart/pyfpdf
+[5]: https://pypi.org/project/pdfminer.six/
+[6]: https://pypi.org/project/pykcs11/
+[7]: https://github.com/Digital-Sapphire/PyUpdater
+[8]: https://github.com/m32/endesive
+[9]: https://www.microsoft.com/it-IT/download/details.aspx?id=53840
+
