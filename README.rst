@@ -1,7 +1,6 @@
-Documentazione di FirmaJR!
-==========================================
+Documentazione di FirmaJR!    |docs|
+====================================
 
-|build-status| |docs| |coverage|
 
 FirmaJR è un'applicazione che permette di firmare digitalmente documenti.
 
@@ -79,3 +78,7 @@ Indici
 .. _PyUpdater: https://github.com/Digital-Sapphire/PyUpdater
 .. _endesive: https://github.com/m32/endesive
 .. _Microsoft Visual C++ 2015 Redistributable Update 3: https://www.microsoft.com/it-IT/download/details.aspx?id=53840
+
+.. |docs| image:: https://readthedocs.org/projects/firmajr/badge/?version=latest
+:target: https://firmajr.readthedocs.io/en/latest/?badge=latest
+:alt: Documentation Status
