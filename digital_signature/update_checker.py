@@ -41,6 +41,8 @@ def check_for_updates(rev_checker_url=None):
     :rtype: AppUpdate
     """
     assert CLIENT_CONFIG.PUBLIC_KEY is not None
+    # Se update_checker_url è presente nel json, allora il controllo degli aggiornamenti viene
+    # fatto su quell'URL altrimenti prendo il default dal file di configurazione
     if rev_checker_url is not None:
         CLIENT_CONFIG.UPDATE_URLS[0] = rev_checker_url + "deploy/"
     client = Client(CLIENT_CONFIG, refresh=True, progress_hooks=[progress])

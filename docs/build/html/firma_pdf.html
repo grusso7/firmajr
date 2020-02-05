@@ -83,7 +83,7 @@
             
               <p class="caption"><span class="caption-text">Contenuti:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare a sviluppare</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="flusso.html">Flusso di esecuzione</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="flusso.html#avvio-firma-lato-web-application">Avvio firma lato web application</a></li>
 <li class="toctree-l2"><a class="reference internal" href="flusso.html#operazioni-preliminari">Operazioni preliminari</a></li>
@@ -163,7 +163,142 @@
             
   <div class="section" id="firma-pdf">
 <h1>Firma PDF<a class="headerlink" href="#firma-pdf" title="Link a questa intestazione">¶</a></h1>
-<p>Da scrivere…</p>
+<p>La firma di un file PDF avviene nel metodo <strong>sign_pdf(*args*)</strong> che si trova nel file <em>digiSign_lib.py</em> dei sorgenti.</p>
+<p>Anche qui come nella firma p7m viene fatto subito il controllo dell’identità dell’utente, opzionale se è una firma in fase di test.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@staticmethod</span>
+<span class="k">def</span> <span class="nf">sign_pdf</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">user_cf</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">check_cf</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot;Metodo per la gestione della firma del file PDF</span>
+
+<span class="sd">:param file_path: Il path del file da firmare</span>
+<span class="sd">:type file_path: str</span>
+<span class="sd">:param open_session: La sessione aperta della smartcard</span>
+<span class="sd">:type open_session: Object</span>
+<span class="sd">:param certificate: Il certificato della smartcard</span>
+<span class="sd">:type certificate: Obj</span>
+<span class="sd">:param certificate_value: Il valore del certificato</span>
+<span class="sd">:type certificate_value: bytes</span>
+<span class="sd">:param user_cf: Il codice fiscale dell&#39;utente</span>
+<span class="sd">:type user_cf: str</span>
+<span class="sd">:param sig_attributes: I parametri della firma</span>
+<span class="sd">:type sig_attributes: Obj</span>
+<span class="sd">:param timestamp: Timestamp dell&#39;ora di firma</span>
+<span class="sd">:type timestamp: timestamp</span>
+<span class="sd">:param check_cf: Parametro per fare o no il controllo del codice fiscale</span>
+<span class="sd">:type check_cf: bool</span>
+<span class="sd">:raises PdfVerificationError: Errore nella verifica del file firmato</span>
+<span class="sd">:return: Il path del file firmato in PDF</span>
+<span class="sd">:rtype: str</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># check for signer identity</span>
+<span class="k">if</span> <span class="n">check_cf</span><span class="p">:</span>
+  <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">_check_certificate_owner</span><span class="p">(</span><span class="n">certificate_value</span><span class="p">,</span> <span class="n">user_cf</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+  <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;check for certificate owner skipped&quot;</span><span class="p">)</span>
+
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;reading pdf file </span><span class="si">{file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">datau</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="n">datas</span> <span class="o">=</span> <span class="n">pdf_builder</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">datau</span><span class="p">,</span> <span class="n">open_session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="s1">&#39;sha256&#39;</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+<span class="n">signed_file_path</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_signed_files_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;pdf&#39;</span><span class="p">)</span>
+
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;saving output to </span><span class="si">{signed_file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">signed_file_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+  <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">datau</span><span class="p">)</span>
+  <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span>
+
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;verifying pdf signatures of </span><span class="si">{signed_file_path}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">new_data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">signed_file_path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+  <span class="n">results</span> <span class="o">=</span> <span class="n">verify</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="p">[</span><span class="n">certificate_value</span><span class="p">])</span>
+  <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Signature </span><span class="si">%d</span><span class="s1">: &#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Signature </span><span class="si">{key}</span><span class="s2">: </span><span class="si">{res}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;hashok?&#39;</span><span class="p">]:</span>
+      <span class="k">raise</span> <span class="n">PdfVerificationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hash verification of Signature </span><span class="si">{key}</span><span class="s2"> is failed.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;signatureok?&#39;</span><span class="p">]:</span>
+      <span class="k">raise</span> <span class="n">PdfVerificationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Signature verification of Signature </span><span class="si">{key}</span><span class="s2"> is failed.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;certok?&#39;</span><span class="p">]:</span>
+      <span class="c1"># TODO verify certificates</span>
+      <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Certificate verification of Signature </span><span class="si">{key}</span><span class="s2"> is failed.&quot;</span><span class="p">)</span>
+<span class="k">except</span><span class="p">:</span>
+  <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during verification of Signature </span><span class="si">{key}</span><span class="s2">:&quot;</span><span class="p">)</span>
+  <span class="k">raise</span>
+
+<span class="k">return</span> <span class="n">signed_file_path</span>
+</pre></div>
+</div>
+<p>Il file viene letto in bytes e viene passato al metodo <strong>sign(*agrs*)</strong> della classe <strong>SignedData</strong> nel file <strong>pdf_builder.py</strong> dei sorgenti
+insieme alla sessione, il certificato, il valore del certificato, l’algoritmo crittografico, gli attributi di firma e il timestamp dell’ora di firma.
+Viene letto attraverso la classe <em>Certificate</em> della libreria <em>asn1crypto</em> il valore del certificato nel formato standard x509 in modo da
+poter reperire le informazioni in modo agevole ed estrarre in questo caso il nome dell’utente dal certificato e creare il seguente dict:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dct</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="sa">b</span><span class="s1">&#39;sigflags&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="c1"># Valore per il tag SigFlags del pdf, un valore diverso da 0 indica che sul pdf sono presenti delle firme, normalmente viene utilizzato sempre il 3</span>
+  <span class="sa">b</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;%b&#39;</span> <span class="o">%</span> <span class="n">x509</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">native</span><span class="p">[</span><span class="s1">&#39;common_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="c1"># Il nome dell&#39;utente</span>
+  <span class="sa">b</span><span class="s1">&#39;signingdate&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;%b&#39;</span> <span class="o">%</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>                   <span class="c1"># Timestamp dell&#39;ora di firma</span>
+  <span class="sa">b</span><span class="s1">&#39;sign_name&#39;</span><span class="p">:</span> <span class="n">sign_name</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>                              <span class="c1"># Il titolo del campo firma</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Quindi viene passato alla funzione <strong>makepdf(self, pdfdata1, udct, zeros, sig_attributes)</strong>, insieme ai bytes del file da firmare (pdfdata1),
+un segnaposto che conterrà il file firmato (zeros) ed infine gli attributi di firma letti dal json iniziale.
+Il metodo genera il nuovo file pdf aggiungendo dei tag che conterranno le informazioni della firma.
+Tecnicamente la costruzione del nuovo pdf avviene in questo modo, viene parsato attraverso una libreria il file pdf da firmare in modo che al posto
+dei bytes è possibile «navigare» il file attraverso delle proprietà. Ogni proprietà del file viene definita attraverso un Tag che all’interno del pdf
+è un oggetto identificato da un identificatore <strong>objid</strong>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">sign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datau</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">cert</span><span class="p">,</span> <span class="n">cert_value</span><span class="p">,</span> <span class="n">algomd</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+   <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;get certificate in format x509 to build signer attributes&#39;</span><span class="p">)</span>
+   <span class="n">x509</span> <span class="o">=</span> <span class="n">Certificate</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cert_value</span><span class="p">)</span>
+
+   <span class="n">sign_name</span> <span class="o">=</span> <span class="n">sig_attributes</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">][</span><span class="s1">&#39;signature_name&#39;</span><span class="p">]</span>
+   <span class="k">if</span> <span class="n">sign_name</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+       <span class="n">sign_name</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_pdf_config</span><span class="p">()[</span><span class="s1">&#39;position&#39;</span><span class="p">][</span><span class="s1">&#39;signatureName&#39;</span><span class="p">]</span>
+
+   <span class="n">dct</span> <span class="o">=</span> <span class="p">{</span>
+       <span class="sa">b</span><span class="s1">&#39;sigflags&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+       <span class="sa">b</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;%b&#39;</span> <span class="o">%</span> <span class="n">x509</span><span class="o">.</span><span class="n">subject</span><span class="o">.</span><span class="n">native</span><span class="p">[</span><span class="s1">&#39;common_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+       <span class="sa">b</span><span class="s1">&#39;signingdate&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;%b&#39;</span> <span class="o">%</span> <span class="n">timestamp</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+       <span class="sa">b</span><span class="s1">&#39;sign_name&#39;</span><span class="p">:</span> <span class="n">sign_name</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+   <span class="p">}</span>
+
+   <span class="c1"># Variabile segnaposto per i bytes che conterranno il file firmato riferimenti della firma</span>
+   <span class="n">zeros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span>
+
+   <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;start building the new pdf&#39;</span><span class="p">)</span>
+   <span class="k">try</span><span class="p">:</span>
+       <span class="n">pdfdata2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">makepdf</span><span class="p">(</span><span class="n">datau</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">)</span>
+       <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;pdf generated correctly&#39;</span><span class="p">)</span>
+   <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+       <span class="k">raise</span> <span class="n">PDFCreationError</span><span class="p">(</span><span class="s1">&#39;Exception on creating pdf&#39;</span><span class="p">)</span>
+
+   <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;preparing data to be signed&#39;</span><span class="p">)</span>
+   <span class="n">startxref</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">datau</span><span class="p">)</span>
+   <span class="n">pdfbr1</span> <span class="o">=</span> <span class="n">pdfdata2</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span>
+   <span class="n">pdfbr2</span> <span class="o">=</span> <span class="n">pdfbr1</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span>
+   <span class="n">br</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">startxref</span> <span class="o">+</span> <span class="n">pdfbr1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">startxref</span> <span class="o">+</span> <span class="n">pdfbr2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pdfdata2</span><span class="p">)</span> <span class="o">-</span> <span class="n">pdfbr2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+   <span class="n">brfrom</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;[0000000000 0000000000 0000000000 0000000000]&#39;</span>
+   <span class="n">brto</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;[</span><span class="si">%010d</span><span class="s1"> </span><span class="si">%010d</span><span class="s1"> </span><span class="si">%010d</span><span class="s1"> </span><span class="si">%010d</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">br</span><span class="p">)</span>
+   <span class="n">pdfdata2</span> <span class="o">=</span> <span class="n">pdfdata2</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">brfrom</span><span class="p">,</span> <span class="n">brto</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+   <span class="n">b1</span> <span class="o">=</span> <span class="n">pdfdata2</span><span class="p">[:</span><span class="n">br</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">startxref</span><span class="p">]</span>
+   <span class="n">b2</span> <span class="o">=</span> <span class="n">pdfdata2</span><span class="p">[</span><span class="n">br</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">startxref</span><span class="p">:]</span>
+   <span class="n">md</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">digestSession</span><span class="p">(</span><span class="n">Mechanism</span><span class="p">(</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKM_SHA256</span><span class="p">))</span>
+   <span class="n">md</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">datau</span><span class="p">)</span>
+   <span class="n">md</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">b1</span><span class="p">)</span>
+   <span class="n">md</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span>
+   <span class="n">md</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">final</span><span class="p">())</span>
+   <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;start pdf signing&#39;</span><span class="p">)</span>
+   <span class="k">try</span><span class="p">:</span>
+       <span class="n">contents</span> <span class="o">=</span> <span class="n">pdf_signer</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">cert</span><span class="p">,</span> <span class="n">cert_value</span><span class="p">,</span> <span class="n">algomd</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">md</span><span class="p">)</span>
+       <span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned</span><span class="p">(</span><span class="n">contents</span><span class="p">)</span>
+       <span class="n">pdfdata2</span> <span class="o">=</span> <span class="n">pdfdata2</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">zeros</span><span class="p">,</span> <span class="n">contents</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+       <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;pdf signed&#39;</span><span class="p">)</span>
+   <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+       <span class="k">raise</span> <span class="n">PDFSigningError</span><span class="p">(</span><span class="s1">&#39;error in the sign procedure&#39;</span><span class="p">)</span>
+
+   <span class="k">return</span> <span class="n">pdfdata2</span>
+</pre></div>
+</div>
 </div>
 
 

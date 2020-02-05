@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Indice" href="genindex.html" />
     <link rel="search" title="Cerca" href="search.html" />
-    <link rel="next" title="Per iniziare" href="getting_started.html" /> 
+    <link rel="next" title="Per iniziare a sviluppare" href="getting_started.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -82,7 +82,7 @@
             
               <p class="caption"><span class="caption-text">Contenuti:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare a sviluppare</a></li>
 <li class="toctree-l1"><a class="reference internal" href="flusso.html">Flusso di esecuzione</a></li>
 <li class="toctree-l1"><a class="reference internal" href="digital_signature.html">Documentazione API</a></li>
 </ul>
@@ -151,23 +151,18 @@
             
   <div class="section" id="documentazione-di-firmajr">
 <h1>Documentazione di FirmaJR!<a class="headerlink" href="#documentazione-di-firmajr" title="Link a questa intestazione">¶</a></h1>
-<p>FirmaJR è un’applicazione che permette di firmare digitalmente documenti.</p>
+<p>FirmaJR è un’applicazione che permette di firmare digitalmente documenti di tipo:
+* PDF in modalità visibile e invisibile;
+* P7M in modalità parallelo e innestate.</p>
 <p>Il software è scritto in Python 3 con lo scopo di sostituire il precedente scritto in Java. JR sta per Java Removed.
 La scelta di svilupparla in python è dovuta soprattutto alla flessibilità del linguaggio, che permette di rendere il software indipendente
 dal browser e compatibile con tutti i sistemi.</p>
 </div>
-<div class="section" id="caratteristiche">
-<h1>Caratteristiche<a class="headerlink" href="#caratteristiche" title="Link a questa intestazione">¶</a></h1>
-<ul class="simple">
-<li><p>Firma di documenti PDF, visibile e invisibile</p></li>
-<li><p>Firma di documenti in P7M, parallelo e innestate</p></li>
-</ul>
-</div>
-<div class="section" id="installazione">
-<h1>Installazione<a class="headerlink" href="#installazione" title="Link a questa intestazione">¶</a></h1>
-<p>Per installare l’applicazione su sistemi Windows bisogna eseguire il setup il quale installerà le librerie necessarie per l’esecuzione su Windows ovvero
-<a class="reference external" href="https://www.microsoft.com/it-IT/download/details.aspx?id=53840">Microsoft Visual C++ 2015 Redistributable Update 3</a> le quali permettono
-al software di auto aggiornarsi nel caso vengano rilasciati nuovi aggiornamenti.
+<div class="section" id="installazione-del-client-per-l-utente-finale">
+<h1>Installazione del client per l’utente finale<a class="headerlink" href="#installazione-del-client-per-l-utente-finale" title="Link a questa intestazione">¶</a></h1>
+<p>Per installare l’applicazione su sistemi Windows bisogna eseguire il setup.
+La procedura installerà <a class="reference external" href="https://www.microsoft.com/it-IT/download/details.aspx?id=53840">Microsoft Visual C++ 2015 Redistributable Update 3</a> per l’esecuzione su Windows,
+che permette al software di auto aggiornarsi nel caso vengano rilasciati nuovi aggiornamenti.
 L’applicazione viene installata nella home dell’utente corrente (Current User) nella cartella <strong>AppData/Roaming</strong>, quindi un utente generico può
 installarla. Durante il processo di installazione viene fatto un controllo per verificare la presenza delle Redistributable, se non sono presenti
 viene chiesto di installarle ed in tal caso c’è bisogno che l’utente abbia i permessi di amministratore oppure fornirne le credenziali,
@@ -176,19 +171,10 @@ se invece sono già installate l’installazione si conclude normalmente.</p>
 La creazione del protocollo avviene attraverso l’inserimento di una chiave nel registro di sistema per l’utente corrente.
 Un esempio di chiamata dell’URL è il seguente:
 <cite>firmajr://&lt;parametri&gt;</cite></p>
-</div>
-<div class="section" id="utilizzo">
-<h1>Utilizzo<a class="headerlink" href="#utilizzo" title="Link a questa intestazione">¶</a></h1>
-<p>Allo stato attuale FirmaJR agisce soltanto quando viene effettuata una richiesta da un’applicazione web,
-è previsto in futuro l’utilizzo come client standalone con una propria GUI.</p>
-<p>Per i dettagli di utilizzo visitare la sezione apposita. &lt;inserire link&gt;</p>
-</div>
-<div class="section" id="contenuti">
-<h1>Contenuti<a class="headerlink" href="#contenuti" title="Link a questa intestazione">¶</a></h1>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Contenuti:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare a sviluppare</a></li>
 <li class="toctree-l1"><a class="reference internal" href="flusso.html">Flusso di esecuzione</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="flusso.html#avvio-firma-lato-web-application">Avvio firma lato web application</a></li>
 <li class="toctree-l2"><a class="reference internal" href="flusso.html#operazioni-preliminari">Operazioni preliminari</a><ul>
@@ -263,7 +249,7 @@ Un esempio di chiamata dell’URL è il seguente:
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="getting_started.html" class="btn btn-neutral float-right" title="Per iniziare" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Per iniziare a sviluppare" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

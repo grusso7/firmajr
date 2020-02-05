@@ -1,8 +1,15 @@
-Per iniziare
-************
+Per iniziare a sviluppare
+=========================
 
-Per lo sviluppo dell'applicazioni sono state utilizzate diverse librerie, per la crittografia e manipolazione dei pdf in particolare. Per ricreare
-l'ambiente di sviluppo è necessario che siano soddisfatti i seguenti prerequisiti:
+Per lo sviluppo dell'applicazioni sono state utilizzate le librerie:
+* Lib1 ->
+* lib2
+* lib3
+* 1
+
+per la crittografia e manipolazione dei pdf in particolare.
+
+Per ricreare l'ambiente di sviluppo è necessario che siano soddisfatti i seguenti prerequisiti:
 
 1. Python 3
 2. Tutte le librerie richieste, controllare il file `requirements.txt` per la lista completa [#f1]_

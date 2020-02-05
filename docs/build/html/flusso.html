@@ -37,7 +37,7 @@
     <link rel="index" title="Indice" href="genindex.html" />
     <link rel="search" title="Cerca" href="search.html" />
     <link rel="next" title="Firma P7M" href="firma_p7m.html" />
-    <link rel="prev" title="Per iniziare" href="getting_started.html" /> 
+    <link rel="prev" title="Per iniziare a sviluppare" href="getting_started.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,7 +83,7 @@
             
               <p class="caption"><span class="caption-text">Contenuti:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Per iniziare a sviluppare</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Flusso di esecuzione</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#avvio-firma-lato-web-application">Avvio firma lato web application</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#operazioni-preliminari">Operazioni preliminari</a><ul>
@@ -168,11 +168,13 @@
 <h1>Flusso di esecuzione<a class="headerlink" href="#flusso-di-esecuzione" title="Link a questa intestazione">¶</a></h1>
 <p>In questa sezione sono presenti tutti i passaggi che fanno parte del processo di firma, dalla richiesta che parte da una web application alla
 effettiva procedura di firma, differenziando i casi di firma P7M e PDF.
-Analizzeremo soprattutto come viene utilizzata nella suite Babel.</p>
+Analizzeremo soprattutto come viene utilizzata nella suite Babel dove tutta la gestione del processo di firma viene fatta nella videata
+<strong>Firma Digitale Due</strong> che si trova in <em>Funzioni Pubbliche</em> nel progetto <em>Components</em>.</p>
 <div class="section" id="avvio-firma-lato-web-application">
 <h2>Avvio firma lato web application<a class="headerlink" href="#avvio-firma-lato-web-application" title="Link a questa intestazione">¶</a></h2>
 <p>Per far partire la procedura di firma l’applicazione web dal quale viene effettuata la richiesta deve svolgere dei passaggi preliminari.
 In questa fase viene creato il json &lt;signConfiguration&gt; che contiene tutti i parametri e la lista dei file da firmare.
+In Babel il metodo si chiama <strong>generateFirmaDueJSON</strong> e si trova nella classe <strong>SignFiles</strong>.
 La struttura è la seguente:</p>
 <div class="highlight-JSON notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
   <span class="nt">&quot;user_id&quot;</span><span class="p">:</span> <span class="s2">&quot;codice_fiscale&quot;</span><span class="p">,</span>
@@ -216,7 +218,8 @@ La struttura è la seguente:</p>
 </div>
 <p>Il json viene salvato sul server redis dell’ambiente (Bologna ad esempio) ed associato ad una chiave che chiamamo token. Questa è una delle possibili
 soluzioni, come da premessa questo è il metodo usato in Babel, è possibile personalizzare questa soluzione in altri modi.
-Dopo questi passaggi viene chiamato un URL con una funzione javascript e l’applicazione web resta in attesa:</p>
+Dopo questi passaggi viene chiamato un URL con una funzione javascript e l’applicazione web resta in attesa finché non viene conclusa l’operazione di
+firma oppure scade il timeout.</p>
 <div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">function</span> <span class="nx">downloadAndNotify</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span><span class="nx">name</span><span class="p">,</span><span class="nx">command</span><span class="p">,</span><span class="nx">token</span><span class="p">,</span><span class="nx">close</span><span class="o">=</span><span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="nx">close</span><span class="p">)</span> <span class="p">{</span>
     <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span> <span class="o">=</span> <span class="nx">url</span><span class="p">;</span>
@@ -238,7 +241,6 @@ Dopo questi passaggi viene chiamato un URL con una funzione javascript e l’app
 viene visualizzato un popoup con la richiesta di confermare o annullare l’apertura dell’applicazione mentre su Firefox viene mostrata una finestra
 la quale anch’essa chiede di confermare l’apertura dell’applicazione però con la possibilità di salvare la scelta così che nelle successive richieste
 viene eseguita direttamente.</p>
-<p>Da questo momento in poi l’applicazione web resta in attesa finché non viene conclusa la firma sull’applicazione desktop oppure scade il timeout.</p>
 </div>
 <div class="section" id="operazioni-preliminari">
 <h2>Operazioni preliminari<a class="headerlink" href="#operazioni-preliminari" title="Link a questa intestazione">¶</a></h2>
@@ -257,20 +259,18 @@ Prima della firma dei file vengono effettuate delle operazioni preliminari:</p>
 <li><p>Nel primo caso viene fatto il parsing dell’URL recuperando i due parametri attesi ovvero il token per identificare univocamente
 il json dei parametri e l’url del server di redis dove viene fatta una chiamata HTTP passando come parametro il token.
 La risposta della chiamata sarà il json dei parametri visto precedentemente.</p></li>
-<li><p>Il secondo caso invece si presenta quando l’applicazione si avvia in seguito ad un aggiornamento. I parametri non saranno presenti
+<li><p>Nel secondo caso invece si presenta quando l’applicazione si avvia in seguito ad un aggiornamento. I parametri non saranno presenti
 più nell’URL ma sono stati salvati sul file system, vedremo la procedura in seguito, quindi vengono recuperati nel metodo <strong>get_sign_resume()</strong>.</p></li>
 </ol>
 </div>
 <div class="section" id="controllo-degli-aggiornamenti">
 <h3>Controllo degli aggiornamenti<a class="headerlink" href="#controllo-degli-aggiornamenti" title="Link a questa intestazione">¶</a></h3>
-<p>Il controllo degli aggiornamenti in FirmaJR viene fatto ogni volta viene eseguita un’operazione di firma. Inizia la fase due.
-Il sistema utilizzato per gli aggiornamenti è fornito dalla libreria PyUpdater. Il progetto viene configurato attraverso uno script
-(per i dettagli consulatare la documentazione della libreria), il quale genera un file di configurazione <em>client_config.py</em>. In questo file vengono
-salvati i parametri necessari a gestire l’operazione, come la public key che serve a decriptare il file zip che contiene l’aggiornamento, il nome
-dell’applicazione e l’url del server degli aggiornamenti.
-Url del server è personalizzabile, infatti nel json scaricato nella fase 1, fra i vari parametri è possibile fornire un url diverso da quello
-preconfigurato per il controllo e lo scaricamento degli aggiornamenti. Questo parametro viene passato al metodo
-<strong>updates_manager(*parameter_to_save, update_checker_url*)</strong> insieme all’URL aperto dal browser.
+<p>Nella seconda fase c’è il controllo degli aggiornamenti <a class="footnote-reference brackets" href="#f1" id="id1">1</a> in FirmaJR viene fatto ogni volta che viene eseguita un’operazione di firma chiamando la funzione
+<strong>updates_manager(*parameter_to_save, update_checker_url*)</strong>.</p>
+<p>Url del server di aggiornamento è personalizzabile, infatti nel json scaricato nella fase 1 nei i parametri è presente il campo
+<em>update_checker_url</em> che può essere diverso da quello preconfigurato.</p>
+<p>L’Url è passato al metodo <strong>updates_manager(*parameter_to_save, update_checker_url*)</strong> insieme all’URL completo aperto dal browser
+(<em>firmajr://&lt;token&gt;;&lt;url&gt;</em>).
 Il metodo gestisce tutta la procedura; effettua il controllo della presenza di nuovi aggiornamenti, se presenti salva i parametri necessari
 al recupero dell’operazione di firma in quanto per aggiornarsi è necessario che l’applicazione venga riavviata, infine avvia l’aggiornamento.</p>
 <ul class="simple">
@@ -283,45 +283,206 @@ viene svuotata alla fine di ogni firma.
 Infine il metodo <strong>run_updates(app_update)</strong> effettua il download e l’estrazione dell’aggiornamento e riavvia l’applicazione.</p></li>
 <li><p>Dopo il riavvio vengono eseguiti gli stessi passi, se non vengono trovati nuovi aggiornamenti l’esecuzione prosegue allo step successivo.</p></li>
 </ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">updates_manager</span><span class="p">(</span><span class="n">parameter_to_save</span><span class="p">,</span> <span class="n">update_checker_url</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;Gestione degli aggiornamenti. Effettua il controllo di nuovi aggiornamenti ed in tal caso salva i parametri della firma e</span>
+<span class="sd">   avvia l&#39;aggiornamento dell&#39;applicazione.</span>
+
+<span class="sd">   :param parameter_to_save: I parameteri da salvare. È l&#39;URL completo con il quale viene lanciata l&#39;applicazione.</span>
+<span class="sd">   :type parameter_to_save: str</span>
+<span class="sd">   :param update_checker_url: L&#39;url del server dove sono presenti le nuove versioni dell&#39;applicazione</span>
+<span class="sd">   :type update_checker_url: str</span>
+<span class="sd">   :return: Lo status dell&#39;aggiornamento</span>
+<span class="sd">   :rtype: UpdateStatus</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checking for client updates.. &quot;</span> <span class="o">+</span> <span class="n">update_checker_url</span><span class="p">)</span>
+   <span class="n">app_update</span> <span class="o">=</span> <span class="n">check_for_updates</span><span class="p">(</span><span class="n">update_checker_url</span><span class="p">)</span>
+   <span class="k">if</span> <span class="n">app_update</span><span class="p">:</span>
+       <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;new update found!&quot;</span><span class="p">)</span>
+       <span class="n">save_sign_status</span><span class="p">(</span><span class="n">parameter_to_save</span><span class="p">)</span>
+       <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;sign status saved. Start updating...&quot;</span><span class="p">)</span>
+       <span class="k">return</span> <span class="n">run_updates</span><span class="p">(</span><span class="n">app_update</span><span class="p">)</span>
+   <span class="k">else</span><span class="p">:</span>
+       <span class="k">return</span> <span class="n">UPDATE_STATUS_STR</span><span class="p">[</span><span class="n">UpdateStatus</span><span class="o">.</span><span class="n">NO_AVAILABLE_UPDATES</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">check_for_updates</span><span class="p">(</span><span class="n">update_checker_url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+ <span class="sd">&quot;&quot;&quot;Controllo nuovi aggiornamenti.</span>
+
+<span class="sd"> :param update_checker_url: Url server degli aggiornamenti, defaults to None</span>
+<span class="sd"> :type update_checker_url: str, optional</span>
+<span class="sd"> :return: UpdateObject utilizzato per aggiornare i binari</span>
+<span class="sd"> :rtype: AppUpdate</span>
+<span class="sd"> &quot;&quot;&quot;</span>
+ <span class="k">assert</span> <span class="n">CLIENT_CONFIG</span><span class="o">.</span><span class="n">PUBLIC_KEY</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+ <span class="c1"># Se update_checker_url è presente nel json, allora il controllo degli aggiornamenti viene</span>
+ <span class="c1"># fatto su quell&#39;URL altrimenti prendo il default dal file di configurazione</span>
+ <span class="k">if</span> <span class="n">update_checker_url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+     <span class="n">CLIENT_CONFIG</span><span class="o">.</span><span class="n">UPDATE_URLS</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">update_checker_url</span> <span class="o">+</span> <span class="s2">&quot;deploy/&quot;</span>
+ <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">CLIENT_CONFIG</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">progress_hooks</span><span class="o">=</span><span class="p">[</span><span class="n">progress</span><span class="p">])</span>
+ <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Actual client version: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">digital_signature</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+ <span class="n">appUpdate</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">update_check</span><span class="p">(</span><span class="n">CLIENT_CONFIG</span><span class="o">.</span><span class="n">APP_NAME</span><span class="p">,</span>
+                                 <span class="n">digital_signature</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span>
+                                 <span class="n">channel</span><span class="o">=</span><span class="s1">&#39;stable&#39;</span><span class="p">)</span>
+ <span class="k">return</span> <span class="n">appUpdate</span>
+
+<span class="k">def</span> <span class="nf">save_sign_status</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+ <span class="sd">&quot;&quot;&quot;Salva i parametri sul file system</span>
+
+<span class="sd"> :param params: Parametri iniziali passati all&#39;avvio dell&#39;applicazione nell&#39;URL</span>
+<span class="sd"> :type params: str</span>
+<span class="sd"> &quot;&quot;&quot;</span>
+ <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving signature status...&quot;</span><span class="p">)</span>
+ <span class="k">try</span><span class="p">:</span>
+     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">,</span> <span class="s1">&#39;sign_status.dat&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+ <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+     <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;error: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ex</span><span class="p">)</span>
+     <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Errore durante il salvataggio dei parametri per l&#39;aggiornamento&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">run_updates</span><span class="p">(</span><span class="n">app_update</span><span class="p">):</span>
+ <span class="sd">&quot;&quot;&quot;Lancia il download dell&#39;aggiornamento e al completamento estrae il file dal zip e riavvia l&#39;applicazione</span>
+
+<span class="sd"> :param app_update: UpdateObject utilizzato per aggiornare i binari</span>
+<span class="sd"> :type app_update: AppUpdate</span>
+<span class="sd"> :return: Lo stato dell&#39;aggiornamento</span>
+<span class="sd"> :rtype: UpdateStatus</span>
+<span class="sd"> &quot;&quot;&quot;</span>
+ <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting update and restart...&#39;</span><span class="p">)</span>
+ <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s2">&quot;frozen&quot;</span><span class="p">):</span>
+     <span class="n">downloaded</span> <span class="o">=</span> <span class="n">app_update</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+     <span class="k">if</span> <span class="n">downloaded</span><span class="p">:</span>
+         <span class="n">status</span> <span class="o">=</span> <span class="n">UpdateStatus</span><span class="o">.</span><span class="n">EXTRACTING_UPDATE_AND_RESTARTING</span>
+         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting update and restart...&#39;</span><span class="p">)</span>
+         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+         <span class="n">app_update</span><span class="o">.</span><span class="n">extract_restart</span><span class="p">()</span>
+     <span class="k">else</span><span class="p">:</span>
+         <span class="n">status</span> <span class="o">=</span> <span class="n">UpdateStatus</span><span class="o">.</span><span class="n">UPDATE_DOWNLOAD_FAILED</span>
+ <span class="k">else</span><span class="p">:</span>
+     <span class="n">status</span> <span class="o">=</span> <span class="n">UpdateStatus</span><span class="o">.</span><span class="n">UPDATE_AVAILABLE_BUT_APP_NOT_FROZEN</span>
+ <span class="k">return</span> <span class="n">UPDATE_STATUS_STR</span><span class="p">[</span><span class="n">status</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="footnote brackets">
+<dt class="label" id="f1"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>Il progetto è configurato attraverso lo script della libreria PyUpdater, il quale genera un file di configurazione <em>client_config.py</em>. In questo file vengono
+salvati i parametri necessari a gestire l’operazione, come la public key che serve a decriptare il file zip che contiene l’aggiornamento, il nome
+dell’applicazione e l’url del server degli aggiornamenti.</p>
+</dd>
+</dl>
 </div>
 <div class="section" id="controllo-del-certificato">
 <h3>Controllo del certificato<a class="headerlink" href="#controllo-del-certificato" title="Link a questa intestazione">¶</a></h3>
 <p>Nella terza fase del ciclo di esecuzione inizia la preparazione per la firma dei file gestito nel metodo <strong>sign(json_parsed)</strong>.
-Prima di proseguire vengono effettuati una serie di controlli per la presenza dei parametri nel json passato come parametro che ripetiamo
-contiene le informazioni necessarie alla firma e i file da firmare.
+Vengono effettuati una serie di controlli per la presenza dei parametri nel json che contiene le informazioni necessarie alla firma e i file da firmare.
 Anche in questa fase ci sono alcuni step fondamentali che analizziamo.</p>
 <ol class="arabic">
-<li><p>Il primo step di questa fase, oltre al reperimento di alcuni parametri dal json della richiesta per salvarli in variabili, è <em>aprire la sessione
-con la smartcard</em> che viene fatto nel metodo <strong>fetch_smart_card_sessions()</strong> nel file <em>signature_util.py</em>. In questa funzione vengono caricati i
-driver di bit4id presenti nella cartella driver della home dell’applicazione e viene stabilita la comunicazione con la smartcard.
-Viene poi richiesto il pin nel metodo <strong>get_pin(user_id)</strong> dove user_id è il codice fiscale dell’utente preso dai parametri del json della richiesta.
+<li><p>Reperimento di alcuni parametri dal json della richiesta per salvarli in variabili;</p></li>
+<li><p>Aprire la sessione con la smartcard, fatto nel metodo <strong>fetch_smart_card_sessions()</strong> nel file <em>signature_util.py</em>.
+In questa funzione vengono caricati i driver di bit4id presenti nella cartella <em>..AppDataRoamingFirmaJRdrivers</em> e viene
+stabilita la comunicazione con la smartcard. Viene poi richiesto il pin nel metodo <strong>get_pin(user_id)</strong> dove user_id è il codice fiscale
+dell’utente preso dai parametri del json della richiesta.
 Il pin viene memorizzato nella variabile <em>user_session</em> e utilizzato per effettuare il login alla sessione della smartcard.
 Se il pin non è corretto il login fallisce e viene mostrato all’utente il messaggio di pin errato. È possibile riprovare o annullare.
-Se il pin viene sbagliato 3 volte la smartcard si blocca.</p></li>
+Se il pin viene sbagliato 3 volte la smartcard si blocca.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+  <span class="n">sessions</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_smart_cards_sessions</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+  <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+  <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+  <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+  <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Controllare che la smart card sia inserita correttamente&quot;</span><span class="p">)</span>
+
+<span class="c1"># attempt to login</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">get_pin</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;pin&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pin not valid&quot;</span><span class="p">)</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_login</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;pin&quot;</span><span class="p">])</span>
+    <span class="k">break</span>
+  <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+    <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;aborted&#39;</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ABORTED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Operazione annullata&quot;</span><span class="p">)</span>
+    <span class="n">show_warning_message</span><span class="p">(</span><span class="s2">&quot;Controllare che il pin sia valido e corretto&quot;</span><span class="p">)</span>
+
+<span class="c1"># fetching certificate value</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">certificate</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+  <span class="n">certificate_value</span> <span class="o">=</span> <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">get_certificate_value</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+  <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+  <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+  <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">extract_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">)))</span>
+  <span class="n">clear_session</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;Impossibile ottenere il certificato di firma&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
 <li><p>Effettuato correttamente il login, viene preso dalla smartcard il certificato e salvato in una variabile attraverso il metodo
-<strong>get_certificate_value(session, certificate)</strong> presente nella classe DigiSignLib nel file <em>digiSign_lib.py</em>.</p></li>
+<strong>get_certificate_value(session, certificate)</strong> presente nella classe DigiSignLib nel file <em>digiSign_lib.py</em>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@staticmethod</span>
+<span class="k">def</span> <span class="nf">get_certificate_value</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">certificate</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Return the value of `certificate`</span>
+<span class="sd">Params:</span>
+<span class="sd">    session: smart card session</span>
+<span class="sd">    certificate: smart card certificate</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;fetching certificate value&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">certificate_value</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">getAttributeValue</span><span class="p">(</span><span class="n">certificate</span><span class="p">,</span> <span class="p">[</span><span class="n">LowLevel</span><span class="o">.</span><span class="n">CKA_VALUE</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">SmartCardConnectionError</span><span class="p">(</span><span class="s2">&quot;Certificate has no valid value&quot;</span><span class="p">)</span>
+
+<span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">certificate_value</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
 <li><p>Caricato il certificato, viene fatto il controllo dello stato di revoca e validità. La procedura è gestita dal metodo
 <strong>get_certificate_status(revocation_checker_url, user_id, certificate_value, params)</strong> che effettua una chiamata al <em>revocation checker server</em>
-utilizzando l’url preso dai parametri. La risposta del server ha la seguente struttura:</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-  <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;behaviours&quot;</span><span class="p">:</span> <span class="s2">&quot;behaviours&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;timestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;check_cf&quot;</span><span class="p">:</span> <span class="s2">&quot;check_cf&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;check_certificate&quot;</span><span class="p">:</span> <span class="s2">&quot;check_certificate&quot;</span>
+utilizzando l’url preso dai parametri.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_certificate_status</span><span class="p">(</span><span class="n">revocation_checker_url</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot;Controllo la validità e lo stato di revoca del certificato e salva il risultato nella sessione dell&#39;utente</span>
+
+<span class="sd">:param revocation_checker_url: Url del revocation checker server che effettua il controllo</span>
+<span class="sd">:type revocation_checker_url: str</span>
+<span class="sd">:param user_id: Il codice fiscale dell&#39;utente</span>
+<span class="sd">:type user_id: str</span>
+<span class="sd">:param certificate_value: Il certificato da controllare</span>
+<span class="sd">:type certificate_value: bytes</span>
+<span class="sd">:param params: Parametri personalizzabili, ed esempio nel sistema babel contengono il codice azienda</span>
+<span class="sd">:type params: str</span>
+<span class="sd">:return: Il json con il risultato del controllo contenente: status, behaviours, timestamp, check codice fiscale</span>
+<span class="sd">:rtype: json</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">check_resp</span> <span class="o">=</span> <span class="n">RevocationChecker</span><span class="p">()</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">revocation_checker_url</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="n">cert_status</span> <span class="o">=</span> <span class="n">check_resp</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">cert_status</span> <span class="o">==</span> <span class="n">ERROR</span><span class="p">:</span>
+    <span class="c1"># set cert_status to UNKNOWN to continue execution</span>
+    <span class="c1"># log already done by RevocationChecker</span>
+    <span class="n">cert_status</span> <span class="o">=</span> <span class="n">UNKNOWN</span>
+<span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cert_status</span>
+
+<span class="n">status</span> <span class="o">=</span> <span class="n">user_session</span><span class="p">[</span><span class="n">user_id</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
+<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Certificate status: </span><span class="si">{status}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">check_resp</span>
+</pre></div>
+</div>
+<p>La risposta del server ha la seguente struttura:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span>         <span class="c1"># Stato di validità del certificato, scaduto, valido o invalido</span>
+  <span class="s2">&quot;behaviours&quot;</span><span class="p">:</span> <span class="s2">&quot;behaviours&quot;</span><span class="p">,</span> <span class="c1"># Contiene l&#39;informazione di come l&#39;applicazione deve comportarsi nei casi in cui il certificato non è regolare</span>
+  <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>   <span class="c1"># Data e ora della firma</span>
+  <span class="s2">&quot;check_cf&quot;</span><span class="p">:</span> <span class="s2">&quot;check_cf&quot;</span><span class="p">,</span>     <span class="c1"># Controllo del codice fiscale dell&#39;utente loggato con quello del certificato</span>
+  <span class="s2">&quot;check_certificate&quot;</span><span class="p">:</span> <span class="s2">&quot;check_certificate&quot;</span> <span class="c1"># Controllo se il certificato è stato revocato</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Con i risultati, in ordine:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>stato di validità del certificato, scaduto</p></li>
-<li><p>proprietà «behaviours» che contiene l’informazione di come l’applicazione deve comportarsi nei casi in cui il certificato non è regolare</p></li>
-<li><p>timestamp che verrà utilizzato come data di firma</p></li>
-<li><p>controllo del codice fiscale dell’utente loggato con quello del certificato</p></li>
-<li><p>controllo se il certificato è stato revocato</p></li>
-</ul>
-</div></blockquote>
 <p>Se il certificato è stato revocato la procedura si interrompe mostrando un messaggio all’utente.
 Se lo stato del certificato è non attendibile, caso in cui il certificato è valido ma non è garantito da una Autorità di Certificazione
 inclusa nell’elenco Pubblico dei Certificatori viene fatto un controllo sulla proprietà <em>behaviours</em> per decidere se mostrare un messaggio e
@@ -366,7 +527,7 @@ Viene infine costruito il json che verrà inviato tramite una chiamata Http alla
         <a href="firma_p7m.html" class="btn btn-neutral float-right" title="Firma P7M" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="getting_started.html" class="btn btn-neutral float-left" title="Per iniziare" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Per iniziare a sviluppare" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

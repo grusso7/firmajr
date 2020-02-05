@@ -30,3 +30,6 @@
 2020-02-04 11:35:20,712 - [INFO | my_logger.py:37] >   ---  Started logger  ---
 2020-02-04 11:55:15,316 - [INFO | my_logger.py:37] >   ---  Started logger  ---
 2020-02-04 13:20:44,412 - [INFO | my_logger.py:37] >   ---  Started logger  ---
+2020-02-05 15:12:25,519 - [INFO | my_logger.py:37] >   ---  Started logger  ---
+2020-02-05 15:24:32,320 - [INFO | my_logger.py:37] >   ---  Started logger  ---
+2020-02-05 19:29:34,838 - [INFO | my_logger.py:37] >   ---  Started logger  ---
