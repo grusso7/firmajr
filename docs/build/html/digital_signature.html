@@ -241,6 +241,11 @@
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="digital_signature.digiSign_lib.DigiSignLib.delinearize_pdf">
+<em class="property">static </em><code class="sig-name descname">delinearize_pdf</code><span class="sig-paren">(</span><em class="sig-param">filepath</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.delinearize_pdf"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.delinearize_pdf" title="Link a questa definizione">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="digital_signature.digiSign_lib.DigiSignLib.get_certificate">
 <em class="property">static </em><code class="sig-name descname">get_certificate</code><span class="sig-paren">(</span><em class="sig-param">session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#DigiSignLib.get_certificate"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.DigiSignLib.get_certificate" title="Link a questa definizione">¶</a></dt>
 <dd><p>Fetch certificate from <cite>session</cite></p>
@@ -376,6 +381,15 @@ pin: user pin</p>
 </dd></dl>
 
 <dl class="exception">
+<dt id="digital_signature.digiSign_lib.PdfNotDeserializable">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.digiSign_lib.</code><code class="sig-name descname">PdfNotDeserializable</code><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#PdfNotDeserializable"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.PdfNotDeserializable" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised when the pdf is not deserializable</p>
+</dd></dl>
+
+<dl class="exception">
 <dt id="digital_signature.digiSign_lib.PdfVerificationError">
 <em class="property">exception </em><code class="sig-prename descclassname">digital_signature.digiSign_lib.</code><code class="sig-name descname">PdfVerificationError</code><a class="reference internal" href="_modules/digital_signature/digiSign_lib.html#PdfVerificationError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_lib.PdfVerificationError" title="Link a questa definizione">¶</a></dt>
 <dd><blockquote>
@@ -470,6 +484,12 @@ pin: user pin</p>
 <dd class="field-odd"><p>json</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="digital_signature.digiSign_server.get_filename_from_cd">
+<code class="sig-prename descclassname">digital_signature.digiSign_server.</code><code class="sig-name descname">get_filename_from_cd</code><span class="sig-paren">(</span><em class="sig-param">cd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/digital_signature/digiSign_server.html#get_filename_from_cd"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.digiSign_server.get_filename_from_cd" title="Link a questa definizione">¶</a></dt>
+<dd><p>Get filename from content-disposition</p>
 </dd></dl>
 
 <dl class="function">
@@ -710,6 +730,15 @@ signer_info: signer info in asn1 form</p>
 <div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </div></blockquote>
 <p>Raised when failing to create pdf</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="digital_signature.pdf_builder.PDFLinearizedError">
+<em class="property">exception </em><code class="sig-prename descclassname">digital_signature.pdf_builder.</code><code class="sig-name descname">PDFLinearizedError</code><a class="reference internal" href="_modules/digital_signature/pdf_builder.html#PDFLinearizedError"><span class="viewcode-link">[sorgente]</span></a><a class="headerlink" href="#digital_signature.pdf_builder.PDFLinearizedError" title="Link a questa definizione">¶</a></dt>
+<dd><blockquote>
+<div><p>Basi: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</div></blockquote>
+<p>Raised when the pdf is linearized</p>
 </dd></dl>
 
 <dl class="exception">

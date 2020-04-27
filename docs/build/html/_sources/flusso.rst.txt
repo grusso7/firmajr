@@ -363,3 +363,11 @@ dai metodi **sign_p7m(*args*)** e **sign_pdf(*args*)**.
 Entrambi i metodi restituiscono il path del file firmato che verrà aggiunto all'oggetto contenitore del risultato che a sua volta viene aggiunto
 alla lista dei file firmati *signed_files_list* che è il dato che viene restituito dalla funzione insieme allo status.
 Viene infine costruito il json che verrà inviato tramite una chiamata Http alla servlet di fine firma e l'applicazione terminerà l'esecuzione.
+
+Debug
+--------------------------
+Per eseguire in debug un processo di firma basta sostituire nel main, all'interno del file *digiSign_server.py*, la variabile *sys_params*
+decommentando la riga successiva e sostituendo l'url con quello della firma che deve essere analizzata.
+L'url è possibile reperirlo sia dal file di log di FirmaJR che dagli strumenti sviluppatore del browser utilizzato.
+
+Infine lanciare l'applicazione in debug direttamente dall'IDE.

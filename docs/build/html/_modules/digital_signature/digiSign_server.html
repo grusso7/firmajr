@@ -149,13 +149,12 @@
   <h1>Codice sorgente per digital_signature.digiSign_server</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">mimetypes</span>
-<span class="kn">import</span> <span class="nn">urllib</span>
-<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">validators</span>
 
 <span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64decode</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
-<span class="kn">from</span> <span class="nn">digiSign_lib</span> <span class="kn">import</span> <span class="n">DigiSignLib</span><span class="p">,</span> <span class="n">CertificateOwnerException</span><span class="p">,</span> <span class="n">CertificateValidityError</span>
+<span class="kn">from</span> <span class="nn">digiSign_lib</span> <span class="kn">import</span> <span class="n">DigiSignLib</span><span class="p">,</span> <span class="n">CertificateOwnerException</span><span class="p">,</span> <span class="n">CertificateValidityError</span><span class="p">,</span> <span class="n">PdfNotDeserializable</span>
 <span class="kn">from</span> <span class="nn">my_config_loader</span> <span class="kn">import</span> <span class="n">MyConfigLoader</span>
 <span class="kn">from</span> <span class="nn">my_logger</span> <span class="kn">import</span> <span class="n">MyLogger</span>
 <span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span><span class="p">,</span> <span class="n">remove</span><span class="p">,</span> <span class="n">sys</span><span class="p">,</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">makedirs</span><span class="p">,</span> <span class="n">environ</span>
@@ -164,7 +163,7 @@
 <span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">move</span>
 <span class="kn">from</span> <span class="nn">tkinter</span> <span class="kn">import</span> <span class="n">Tk</span><span class="p">,</span> <span class="n">Entry</span><span class="p">,</span> <span class="n">Label</span><span class="p">,</span> <span class="n">Button</span><span class="p">,</span> <span class="n">Frame</span><span class="p">,</span> <span class="n">messagebox</span><span class="p">,</span> <span class="n">LEFT</span>
 <span class="kn">from</span> <span class="nn">traceback</span> <span class="kn">import</span> <span class="n">extract_tb</span>
-<span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span> <span class="k">as</span> <span class="n">urlfile</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
 <span class="kn">from</span> <span class="nn">update_checker</span> <span class="kn">import</span> <span class="n">check_for_updates</span><span class="p">,</span> <span class="n">run_updates</span><span class="p">,</span> <span class="n">UPDATE_STATUS_STR</span><span class="p">,</span> <span class="n">UpdateStatus</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 
@@ -230,7 +229,8 @@
     <span class="n">token</span> <span class="o">=</span> <span class="n">tolkien_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">PROTOCOL</span><span class="p">)</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Token: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">token</span><span class="p">)</span>
     <span class="n">rev_url_encoded</span> <span class="o">=</span> <span class="n">tolkien_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">rev_url</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">rev_url_encoded</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">rev_url_encoded</span> <span class="o">=</span> <span class="n">rev_url_encoded</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="n">rev_url</span> <span class="o">=</span> <span class="n">b64decode</span><span class="p">(</span><span class="n">rev_url_encoded</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Revocation Url: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">rev_url</span><span class="p">)</span>
 
     <span class="c1"># Check for upload and signed folder</span>
@@ -239,14 +239,18 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">):</span>
         <span class="n">makedirs</span><span class="p">(</span><span class="n">SIGNED_FOLDER</span><span class="p">)</span>
 
-    <span class="c1"># remove this for prod</span>
-    <span class="c1"># if &quot;HTTP_PROXY&quot; in environ:</span>
-    <span class="c1">#     del environ[&quot;HTTP_PROXY&quot;]</span>
-
+    <span class="c1"># remove proxy if disabled</span>
+    <span class="n">enable_proxy</span> <span class="o">=</span> <span class="n">MyConfigLoader</span><span class="p">()</span><span class="o">.</span><span class="n">get_server_config</span><span class="p">()[</span><span class="s2">&quot;enable_proxy&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">enable_proxy</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;proxy setting is disabled&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;HTTP_PROXY&quot;</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HTTP_PROXY&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;HTTPS_PROXY&quot;</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HTTPS_PROXY&quot;</span><span class="p">]</span>
 
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;getting paramaters...&quot;</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">rev_url</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">token</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">rev_url</span> <span class="o">+</span> <span class="n">token</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
             <span class="n">signature_params</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;parameters found: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">signature_params</span><span class="p">)</span>
@@ -262,6 +266,11 @@
                 <span class="n">master_document_id</span> <span class="o">=</span> <span class="n">signature_params</span><span class="p">[</span><span class="s2">&quot;masterDocumentId&quot;</span><span class="p">]</span>
             <span class="n">end_sign_manager_url</span> <span class="o">=</span> <span class="n">signature_params</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;endSignManagerUrl&#39;</span><span class="p">]</span>
             <span class="n">result_channel</span> <span class="o">=</span> <span class="n">signature_params</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">][</span><span class="s1">&#39;resultChannel&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">enable_proxy</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;NO_PROXY&quot;</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
+                    <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NO_PROXY&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="s2">&quot;;*&quot;</span> <span class="o">+</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">end_sign_manager_url</span><span class="p">)</span><span class="o">.</span><span class="n">netloc</span> <span class="o">+</span> <span class="s2">&quot;*&quot;</span>
+
             <span class="n">sign_result</span> <span class="o">=</span> <span class="n">sign</span><span class="p">(</span><span class="n">signature_params</span><span class="p">)</span>
             <span class="c1"># chiamare la endSignServletHere</span>
             <span class="n">response_maker</span><span class="p">(</span><span class="n">end_sign_manager_url</span><span class="p">,</span> <span class="n">result_channel</span><span class="p">,</span> <span class="n">sign_result</span><span class="p">,</span> <span class="n">master_document_id</span><span class="p">)</span>
@@ -576,6 +585,13 @@
                 <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_logout</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
                 <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_close</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">user_tip</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">PdfNotDeserializable</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+                <span class="n">user_tip</span> <span class="o">=</span> <span class="s2">&quot;Non è possibile firmare il file </span><span class="si">%s</span><span class="s2"> perché ha delle informazioni che lo rendono &quot;</span> \
+                           <span class="s2">&quot;incompatibile con FirmaJR. Firmare il file esternamente.&quot;</span> <span class="o">%</span> <span class="n">file_name</span>
+                <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_logout</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+                <span class="n">DigiSignLib</span><span class="p">()</span><span class="o">.</span><span class="n">session_close</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">error_response</span><span class="p">(</span><span class="n">SignStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">user_tip</span><span class="p">)</span>
             <span class="k">except</span><span class="p">:</span>
                 <span class="n">_</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">tb</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -758,7 +774,6 @@
 <span class="sd">    :return: La risposta http della servlet</span>
 <span class="sd">    :rtype: HttpResponse</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
         <span class="s2">&quot;Sending response...{url: </span><span class="si">%s</span><span class="s2">, result_channel: </span><span class="si">%s</span><span class="s2">, result: </span><span class="si">%s</span><span class="s2">, masterDocumentId: </span><span class="si">%s</span><span class="s2">}&quot;</span><span class="p">,</span>
         <span class="n">url_servlet_end_sign</span><span class="p">,</span> <span class="n">_result_channel</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">master_document_id</span><span class="p">)</span>
@@ -826,7 +841,6 @@
     <span class="c1">#     &quot;check_cf&quot;: &quot;check_cf&quot;,</span>
     <span class="c1">#     &quot;check_certificate&quot;: &quot;check_certificate&quot;</span>
     <span class="c1"># }</span>
-
     <span class="n">check_resp</span> <span class="o">=</span> <span class="n">RevocationChecker</span><span class="p">()</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">revocation_checker_url</span><span class="p">,</span> <span class="n">certificate_value</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
     <span class="n">cert_status</span> <span class="o">=</span> <span class="n">check_resp</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">cert_status</span> <span class="o">==</span> <span class="n">ERROR</span><span class="p">:</span>
@@ -958,6 +972,19 @@
     <span class="n">widget</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;+{int(x)}+{int(y)}&quot;</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="get_filename_from_cd"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.get_filename_from_cd">[documenti]</a><span class="k">def</span> <span class="nf">get_filename_from_cd</span><span class="p">(</span><span class="n">cd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get filename from content-disposition&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cd</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">fname</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;filename=</span><span class="se">\&quot;</span><span class="s1">?([^</span><span class="se">\&quot;</span><span class="s1">]+)&#39;</span><span class="p">,</span> <span class="n">cd</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">fname</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
 <div class="viewcode-block" id="download_file"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.digiSign_server.download_file">[documenti]</a><span class="k">def</span> <span class="nf">download_file</span><span class="p">(</span><span class="n">file_url</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Scarica il file dall&#39;url passato come parametro</span>
 
@@ -968,22 +995,25 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># get file name with random uuid</span>
-    <span class="n">file_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+    <span class="c1"># file_name = str(uuid.uuid4())</span>
     <span class="c1"># get file content</span>
-    <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">file_url</span><span class="p">)</span>
-    <span class="n">req</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36&#39;</span><span class="p">)</span>
-
-    <span class="n">url_resp</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-    <span class="n">content_type</span> <span class="o">=</span> <span class="n">url_resp</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;content-type&#39;</span><span class="p">]</span>
-    <span class="n">guess_type</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_extension</span><span class="p">(</span><span class="n">content_type</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
-    <span class="n">url_content</span> <span class="o">=</span> <span class="n">url_resp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="c1"># req = urllib.request.Request(file_url)</span>
+    <span class="c1"># req.add_header(&#39;User-Agent&#39;, &#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36&#39;)</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">:</span> <span class="s1">&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) &#39;</span>
+                             <span class="s1">&#39;Chrome/50.0.2661.102 Safari/537.36&#39;</span><span class="p">}</span>
+    <span class="c1"># url_resp = urllib.request.urlopen(req)</span>
+    <span class="n">url_resp</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">file_url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+    <span class="n">file_name</span> <span class="o">=</span> <span class="n">get_filename_from_cd</span><span class="p">(</span><span class="n">url_resp</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;content-disposition&#39;</span><span class="p">))</span>
+    <span class="c1"># content_type = url_resp.getheader(&#39;Content-type&#39;)</span>
+    <span class="c1"># guess_type = mimetypes.guess_extension(content_type).strip(&#39;.&#39;)</span>
+    <span class="c1"># url_content = url_resp.read()</span>
     <span class="c1"># create file locally</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">):</span>
         <span class="n">makedirs</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">)</span>
 
-    <span class="n">file_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">file_name</span><span class="p">,</span> <span class="n">guess_type</span><span class="p">]))</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">UPLOAD_FOLDER</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">_file</span><span class="p">:</span>
-        <span class="n">_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">url_content</span><span class="p">)</span>
+        <span class="n">_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">url_resp</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">file_path</span></div>
 
@@ -994,7 +1024,7 @@
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;App started. Check for resume...&quot;</span><span class="p">)</span>
     <span class="n">sys_params</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-  <span class="c1">#  sys_params = [&#39;firmajr://B4F4940C-B901-526A-0890-9ECBD6FD0EB6;aHR0cDovLzEyNy4wLjAuMTo4MDgwL0RvY3RvckZhc2VuL1NlcnZlU2lnbkNvbmZpZ3VyYXRpb24=&#39;]</span>
+    <span class="c1"># sys_params = [&#39;firmajr://BEC7BA0A-40FD-DB9F-A58A-E2026C8888E8;105;false;aHR0cHM6Ly9nZG1sLmludGVybmFsLmF1c2wuYm9sb2duYS5pdC9jZXJ0X3Jldm9jYXRpb25fY2hlY2tlci9zaWduQ29uZmlndXJhdGlvbg==/&#39;]</span>
     <span class="n">handle_sign</span><span class="p">(</span><span class="n">sys_params</span><span class="p">)</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;closing app&quot;</span><span class="p">)</span>
 </pre></div>

@@ -1,12 +1,11 @@
 import json
 import mimetypes
-import urllib
-import uuid
+import re
 import validators
 
 from base64 import b64decode
 from datetime import datetime, timedelta
-from digiSign_lib import DigiSignLib, CertificateOwnerException, CertificateValidityError
+from digiSign_lib import DigiSignLib, CertificateOwnerException, CertificateValidityError, PdfNotDeserializable
 from my_config_loader import MyConfigLoader
 from my_logger import MyLogger
 from os import path, remove, sys, listdir, makedirs, environ
@@ -15,7 +14,7 @@ from revocation_checker import RevocationChecker
 from shutil import move
 from tkinter import Tk, Entry, Label, Button, Frame, messagebox, LEFT
 from traceback import extract_tb
-from urllib import request as urlfile
+from urllib.parse import urlparse
 from update_checker import check_for_updates, run_updates, UPDATE_STATUS_STR, UpdateStatus
 from enum import Enum
 
@@ -81,7 +80,8 @@ def handle_sign(start_params):
     token = tolkien_list[0].lstrip(PROTOCOL)
     log.info("Token: %s" % token)
     rev_url_encoded = tolkien_list[1]
-    rev_url = b64decode(rev_url_encoded).decode("utf-8")
+    rev_url_encoded = rev_url_encoded.rstrip('/')
+    rev_url = b64decode(rev_url_encoded).decode("utf-8").rstrip('/') + '/'
     log.info("Revocation Url: %s" % rev_url)
 
     # Check for upload and signed folder
@@ -90,14 +90,18 @@ def handle_sign(start_params):
     if not path.exists(SIGNED_FOLDER) or not path.isdir(SIGNED_FOLDER):
         makedirs(SIGNED_FOLDER)
 
-    # remove this for prod
-    # if "HTTP_PROXY" in environ:
-    #     del environ["HTTP_PROXY"]
-
+    # remove proxy if disabled
+    enable_proxy = MyConfigLoader().get_server_config()["enable_proxy"]
+    if enable_proxy is False:
+        log.info("proxy setting is disabled")
+        if "HTTP_PROXY" in environ:
+            del environ["HTTP_PROXY"]
+        if "HTTPS_PROXY" in environ:
+            del environ["HTTPS_PROXY"]
 
     log.info("getting paramaters...")
     try:
-        r = get(rev_url + "/" + token)
+        r = get(rev_url + token)
         if r.status_code == 200:
             signature_params = r.json()
             log.info("parameters found: %s" % signature_params)
@@ -113,6 +117,11 @@ def handle_sign(start_params):
                 master_document_id = signature_params["masterDocumentId"]
             end_sign_manager_url = signature_params['params']['endSignManagerUrl']
             result_channel = signature_params['params']['resultChannel']
+
+            if enable_proxy is False:
+                if "NO_PROXY" in environ:
+                    environ["NO_PROXY"] += ";*" + urlparse(end_sign_manager_url).netloc + "*"
+
             sign_result = sign(signature_params)
             # chiamare la endSignServletHere
             response_maker(end_sign_manager_url, result_channel, sign_result, master_document_id)
@@ -427,6 +436,13 @@ def sign(json_parsed):
                 DigiSignLib().session_logout(session)
                 DigiSignLib().session_close(session)
                 return error_response(SignStatus.ERROR.value, user_tip)
+            except PdfNotDeserializable as err:
+                log.error(err)
+                user_tip = "Non è possibile firmare il file %s perché ha delle informazioni che lo rendono " \
+                           "incompatibile con FirmaJR. Firmare il file esternamente." % file_name
+                DigiSignLib().session_logout(session)
+                DigiSignLib().session_close(session)
+                return error_response(SignStatus.ERROR.value, user_tip)
             except:
                 _, value, tb = sys.exc_info()
                 log.error(value)
@@ -609,7 +625,6 @@ def response_maker(url_servlet_end_sign, _result_channel, result, master_documen
     :return: La risposta http della servlet
     :rtype: HttpResponse
     """
-
     log.info(
         "Sending response...{url: %s, result_channel: %s, result: %s, masterDocumentId: %s}",
         url_servlet_end_sign, _result_channel, result, master_document_id)
@@ -677,7 +692,6 @@ def get_certificate_status(revocation_checker_url, user_id, certificate_value, p
     #     "check_cf": "check_cf",
     #     "check_certificate": "check_certificate"
     # }
-
     check_resp = RevocationChecker().check(revocation_checker_url, certificate_value, params)
     cert_status = check_resp["status"]
     if cert_status == ERROR:
@@ -809,6 +823,19 @@ def _center(widget):
     widget.geometry(f"+{int(x)}+{int(y)}")
 
 
+def get_filename_from_cd(cd):
+    """Get filename from content-disposition"""
+
+    if not cd:
+        return None
+
+    fname = re.findall('filename=\"?([^\"]+)', cd)
+
+    if len(fname) == 0:
+        return None
+    return fname[0]
+
+
 def download_file(file_url):
     """Scarica il file dall'url passato come parametro
 
@@ -819,22 +846,25 @@ def download_file(file_url):
     """
 
     # get file name with random uuid
-    file_name = str(uuid.uuid4())
+    # file_name = str(uuid.uuid4())
     # get file content
-    req = urllib.request.Request(file_url)
-    req.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36')
-
-    url_resp = urllib.request.urlopen(req)
-    content_type = url_resp.headers['content-type']
-    guess_type = mimetypes.guess_extension(content_type).strip('.')
-    url_content = url_resp.read()
+    # req = urllib.request.Request(file_url)
+    # req.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36')
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) '
+                             'Chrome/50.0.2661.102 Safari/537.36'}
+    # url_resp = urllib.request.urlopen(req)
+    url_resp = get(url=file_url, headers=headers)
+    file_name = get_filename_from_cd(url_resp.headers.get('content-disposition'))
+    # content_type = url_resp.getheader('Content-type')
+    # guess_type = mimetypes.guess_extension(content_type).strip('.')
+    # url_content = url_resp.read()
     # create file locally
     if not path.exists(UPLOAD_FOLDER) or not path.isdir(UPLOAD_FOLDER):
         makedirs(UPLOAD_FOLDER)
 
-    file_path = path.join(UPLOAD_FOLDER, '.'.join([file_name, guess_type]))
+    file_path = path.join(UPLOAD_FOLDER, file_name)
     with open(file_path, "wb") as _file:
-        _file.write(url_content)
+        _file.write(url_resp.content)
 
     return file_path
 
@@ -845,6 +875,6 @@ def download_file(file_url):
 if __name__ == "__main__":
     log.info("App started. Check for resume...")
     sys_params = sys.argv[1:]
-  #  sys_params = ['firmajr://B4F4940C-B901-526A-0890-9ECBD6FD0EB6;aHR0cDovLzEyNy4wLjAuMTo4MDgwL0RvY3RvckZhc2VuL1NlcnZlU2lnbkNvbmZpZ3VyYXRpb24=']
+    # sys_params = ['firmajr://BEC7BA0A-40FD-DB9F-A58A-E2026C8888E8;105;false;aHR0cHM6Ly9nZG1sLmludGVybmFsLmF1c2wuYm9sb2duYS5pdC9jZXJ0X3Jldm9jYXRpb25fY2hlY2tlci9zaWduQ29uZmlndXJhdGlvbg==/']
     handle_sign(sys_params)
     log.info("closing app")

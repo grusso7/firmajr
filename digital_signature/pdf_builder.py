@@ -31,6 +31,11 @@ class PDFSigningError(Exception):
     pass
 
 
+class PDFLinearizedError(Exception):
+    """ Raised when the pdf is linearized"""
+    pass
+
+
 class Signature:
     def __init__(self, name, pos):
         self.name = name
@@ -57,9 +62,13 @@ class SignedData(object):
             break
         i1 = startxref
         for xref in document.xrefs:
-            for (_, offset, _) in xref.offsets.values():
-                if offset > i0:
-                    i1 = min(i1, offset)
+            try:
+                for (_, offset, _) in xref.offsets.values():
+                    if offset > i0:
+                        i1 = min(i1, offset)
+            except Exception as e:
+                log.warning(e)
+                raise PDFLinearizedError("pdf is linearized")
         if i1 <= i0:
             data = pdfdata1[i0:len(pdfdata1)]
             i0 = data.find(b'<<') + 2
@@ -429,12 +438,15 @@ startxref\n\
             b'sign_name': sign_name.encode()
         }
 
+        # Variabile segnaposto per i bytes che conterranno il file firmato riferimenti della firma
         zeros = self.aligned(b'\0')
 
         log.info('start building the new pdf')
         try:
             pdfdata2 = self.makepdf(datau, dct, zeros, sig_attributes)
             log.info('pdf generated correctly')
+        except PDFLinearizedError as e:
+            raise PDFLinearizedError(e)
         except Exception:
             raise PDFCreationError('Exception on creating pdf')
 

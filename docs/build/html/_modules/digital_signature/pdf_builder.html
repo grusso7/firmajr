@@ -180,6 +180,11 @@
     <span class="k">pass</span></div>
 
 
+<div class="viewcode-block" id="PDFLinearizedError"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.pdf_builder.PDFLinearizedError">[documenti]</a><span class="k">class</span> <span class="nc">PDFLinearizedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Raised when the pdf is linearized&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
 <div class="viewcode-block" id="Signature"><a class="viewcode-back" href="../../digital_signature.html#digital_signature.pdf_builder.Signature">[documenti]</a><span class="k">class</span> <span class="nc">Signature</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -206,9 +211,13 @@
             <span class="k">break</span>
         <span class="n">i1</span> <span class="o">=</span> <span class="n">startxref</span>
         <span class="k">for</span> <span class="n">xref</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">xrefs</span><span class="p">:</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">xref</span><span class="o">.</span><span class="n">offsets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">offset</span> <span class="o">&gt;</span> <span class="n">i0</span><span class="p">:</span>
-                    <span class="n">i1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">xref</span><span class="o">.</span><span class="n">offsets</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">offset</span> <span class="o">&gt;</span> <span class="n">i0</span><span class="p">:</span>
+                        <span class="n">i1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">PDFLinearizedError</span><span class="p">(</span><span class="s2">&quot;pdf is linearized&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">i1</span> <span class="o">&lt;=</span> <span class="n">i0</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">pdfdata1</span><span class="p">[</span><span class="n">i0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">pdfdata1</span><span class="p">)]</span>
             <span class="n">i0</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;&lt;&lt;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span>
@@ -578,12 +587,15 @@
             <span class="sa">b</span><span class="s1">&#39;sign_name&#39;</span><span class="p">:</span> <span class="n">sign_name</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
         <span class="p">}</span>
 
+        <span class="c1"># Variabile segnaposto per i bytes che conterranno il file firmato riferimenti della firma</span>
         <span class="n">zeros</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span>
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;start building the new pdf&#39;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">pdfdata2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">makepdf</span><span class="p">(</span><span class="n">datau</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">sig_attributes</span><span class="p">)</span>
             <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;pdf generated correctly&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">PDFLinearizedError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PDFLinearizedError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">PDFCreationError</span><span class="p">(</span><span class="s1">&#39;Exception on creating pdf&#39;</span><span class="p">)</span>
 

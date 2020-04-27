@@ -97,6 +97,7 @@
 <li class="toctree-l3"><a class="reference internal" href="firma_pdf.html">Firma PDF</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#debug">Debug</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="digital_signature.html">Documentazione API</a></li>
@@ -513,6 +514,13 @@ dai metodi <strong>sign_p7m(*args*)</strong> e <strong>sign_pdf(*args*)</strong>
 <p>Entrambi i metodi restituiscono il path del file firmato che verrà aggiunto all’oggetto contenitore del risultato che a sua volta viene aggiunto
 alla lista dei file firmati <em>signed_files_list</em> che è il dato che viene restituito dalla funzione insieme allo status.
 Viene infine costruito il json che verrà inviato tramite una chiamata Http alla servlet di fine firma e l’applicazione terminerà l’esecuzione.</p>
+</div>
+<div class="section" id="debug">
+<h2>Debug<a class="headerlink" href="#debug" title="Link a questa intestazione">¶</a></h2>
+<p>Per eseguire in debug un processo di firma basta sostituire nel main, all’interno del file <em>digiSign_server.py</em>, la variabile <em>sys_params</em>
+decommentando la riga successiva e sostituendo l’url con quello della firma che deve essere analizzata.
+L’url è possibile reperirlo sia dal file di log di FirmaJR che dagli strumenti sviluppatore del browser utilizzato.</p>
+<p>Infine lanciare l’applicazione in debug direttamente dall’IDE.</p>
 </div>
 </div>
 

@@ -1,9 +1,12 @@
 import mimetypes
+import PyPDF2
+
 from asn1crypto import cms
 from my_logger import MyLogger
 from OpenSSL import crypto
 from os import path
 from p7m_encoder import P7mEncoder, P7mAttributes
+from pdf_builder import PDFLinearizedError
 from signature_util import SignatureUtils
 from tkinter import Tk, Label, Button, Frame
 from verify import verify
@@ -20,6 +23,11 @@ class P7mCreationError(Exception):
 
 class PdfVerificationError(Exception):
     """ Raised when failing to create p7m """
+    pass
+
+
+class PdfNotDeserializable(Exception):
+    """ Raised when the pdf is not deserializable """
     pass
 
 
@@ -94,6 +102,7 @@ class DigiSignLib:
             signed_data = info['content']
             p7m_attrs.algos = signed_data['digest_algorithms'].contents
             p7m_attrs.certificates = signed_data['certificates'].contents
+            # Se la firma è parallela, viene sovrascritto il file con il native, ovvero il file originale.
             if sig_type == 'parallel':
                 p7m_attrs.signer_infos = signed_data['signer_infos'].contents
                 file_content = signed_data['encap_content_info'].native['content']
@@ -195,7 +204,14 @@ class DigiSignLib:
 
         log.info(f"reading pdf file {file_path}")
         datau = open(file_path, 'rb').read()
-        datas = pdf_builder.sign(datau, open_session, certificate, certificate_value, 'sha256', sig_attributes, timestamp)
+        try:
+            datas = pdf_builder.sign(datau, open_session, certificate, certificate_value, 'sha256', sig_attributes, timestamp)
+        except PDFLinearizedError as err:
+            log.warning(err)
+            delinearized_file = DigiSignLib().delinearize_pdf(file_path)
+
+            datau = open(delinearized_file, "rb").read()
+            datas = pdf_builder.sign(datau, open_session, certificate, certificate_value, 'sha256', sig_attributes, timestamp)
 
         signed_file_path = DigiSignLib().get_signed_files_path(file_path, 'pdf')
 
@@ -223,6 +239,30 @@ class DigiSignLib:
             raise
 
         return signed_file_path
+
+    @staticmethod
+    def delinearize_pdf(filepath):
+
+        pdf = filepath
+        output_filename = filepath.replace(".pdf", "-1.pdf")
+        pdf_fh = open(pdf, 'rb')
+        pdf = PyPDF2.PdfFileReader(pdf_fh, strict=False)
+
+        writer = PyPDF2.PdfFileWriter()
+
+        try:
+            for i in range(0, pdf.getNumPages()):
+                page = pdf.getPage(i)
+                writer.addPage(page)
+
+            with open(output_filename, 'wb') as fh:
+                writer.write(fh)
+        except Exception as error:
+            pdf_fh.close()
+            raise PdfNotDeserializable("Can't deserialize the pdf: %s", error)
+
+        pdf_fh.close()
+        return output_filename
 
     @staticmethod
     def session_logout(session):
@@ -392,14 +432,16 @@ class DigiSignLib:
         signed_file_complete_name = path.basename(file_path)
         signed_file_name, signed_file_extension = path.splitext(signed_file_complete_name)
         #   composing final file name
+        #   Check if file is already signed
         start = signed_file_name.find('firmato')
         if start != -1:
             signed_file_name = signed_file_name.replace('firmato', '')
             final_file_name = f"{signed_file_name[:start]}(firmato){signed_file_name[start:]}{signed_file_extension}"
         else:
             final_file_name = f"{signed_file_name}(firmato){signed_file_extension}"
-        if (p7m_sig_type != 'parallel' and sig_type != 'pdf') or (
-                p7m_sig_type == 'parallel' and signed_file_extension == '.pdf'):
+
+        if sig_type == 'p7m' and (p7m_sig_type != 'parallel' or start != -1):
             final_file_name = final_file_name + f".{sig_type}"
         signed_file_path = path.join(signed_file_base_path, final_file_name)
+
         return signed_file_path
