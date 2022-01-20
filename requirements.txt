@@ -3,7 +3,7 @@ validators==0.14.0
 redis==3.3.11
 PyUpdater==3.1.1
 pdfminer.six==20191020
-cryptography==3.2
+cryptography==3.3.2
 requests==2.22.0
 asn1crypto==1.2.0
 pdfminer==20191125
