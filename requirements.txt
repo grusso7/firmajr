@@ -1,6 +1,6 @@
 asn1==2.2.0
 validators==0.14.0
-redis==3.3.11
+redis==4.5.3
 PyUpdater==3.1.1
 pdfminer.six==20191020
 cryptography==3.3.2
